@@ -29,9 +29,9 @@ export default function RevenueChart({ data }: { data: any[] }) {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: isDark ? '#18181b' : '#ffffff', 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: isDark ? '#18181b' : '#ffffff',
                 borderColor: isDark ? '#27272a' : '#e4e4e7',
                 borderRadius: '8px',
                 color: isDark ? '#fff' : '#000',
@@ -39,7 +39,12 @@ export default function RevenueChart({ data }: { data: any[] }) {
                 fontSize: '12px',
                 textTransform: 'uppercase'
               }}
-              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+              formatter={(value: any) => {
+                if (typeof value === 'number') {
+                  return [`$${value.toFixed(2)}`, 'Revenue'];
+                }
+                return ['$0.00', 'Revenue'];
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
