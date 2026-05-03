@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getTimeLogs, createTimeLog, updateTimeLog, deleteTimeLog } = require('../controllers/timelogController');
+const { getTimeLogs, createTimeLog, updateTimeLog, deleteTimeLog } = require('../controllers/timeLogController');
 const { protect } = require('../middleware/auth');
 
 router.route('/').get(protect, getTimeLogs).post(protect, createTimeLog);
