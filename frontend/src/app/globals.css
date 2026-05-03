@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .clip-slant {
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+  }
+  .clip-slant-right {
+    clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+  }
+  .clip-slant-btn {
+    clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
+  }
+  .bg-carbon {
+    background-image: linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.03) 75%, rgba(0,0,0,0.03)), linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.03) 75%, rgba(0,0,0,0.03));
+    background-color: #fafafa;
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+  }
+}
+
+.dark .bg-carbon {
+  background-image: linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111), linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111);
+  background-color: #1a1a1a;
+}
+
+input, select, textarea {
+  background-color: #ffffff !important;
+  border-color: #e4e4e7 !important;
+  color: #18181b !important;
+  transition: all 0.2s ease-out;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: #18181b !important;
+  border-color: #3f3f46 !important;
+  color: white !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #E10600 !important;
+  box-shadow: 0 0 12px rgba(225, 6, 0, 0.4) !important;
+  outline: none !important;
+}
