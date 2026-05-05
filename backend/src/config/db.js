@@ -3,7 +3,13 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/timesheet-tracker';
-    await mongoose.connect(uri);
+    await mongoose.connect(uri, {
+      serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
     console.log(`MongoDB Connected successfully!`);
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);
