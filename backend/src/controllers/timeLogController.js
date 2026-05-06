@@ -1,6 +1,30 @@
 const TimeLog = require('../models/TimeLog');
 const Client = require('../models/Client');
 
+// Helper to calculate hours from start and finish times
+const calculateHoursWorked = (startTime, finishTime, breakMinutes = 0) => {
+  if (!startTime || !finishTime) return null;
+  
+  // Parse time strings in HH:MM format
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = finishTime.split(':').map(Number);
+  
+  // Convert to minutes
+  const startMinutes = startHour * 60 + startMin;
+  let endMinutes = endHour * 60 + endMin;
+  
+  // Handle case where finish time is next day (after midnight)
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60;
+  }
+  
+  // Calculate total minutes worked
+  const totalMinutes = endMinutes - startMinutes - (breakMinutes || 0);
+  
+  // Convert back to hours with decimal precision
+  return parseFloat((totalMinutes / 60).toFixed(2));
+};
+
 // Helper to calculate revenue split
 const calculateRevenue = (dateString, hours, client, isPublicHoliday) => {
   const date = new Date(dateString);
@@ -41,11 +65,24 @@ const getTimeLogs = async (req, res) => {
 // @route   POST /api/timelogs
 // @access  Private
 const createTimeLog = async (req, res) => {
-  const { client, date, hours, notes, isPublicHoliday } = req.body;
+  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday } = req.body;
 
-  if (!client || !date || hours === undefined) {
+  // Calculate hours if start and finish times provided
+  let finalHours = hours;
+  if (startTime && finishTime) {
+    finalHours = calculateHoursWorked(startTime, finishTime, breakMinutes || 0);
+    if (!finalHours || finalHours <= 0) {
+      res.status(400);
+      throw new Error('Invalid start or finish time');
+    }
+  } else if (!hours || hours <= 0) {
     res.status(400);
-    throw new Error('Please add all fields');
+    throw new Error('Please provide hours or start/finish times');
+  }
+
+  if (!client || !date) {
+    res.status(400);
+    throw new Error('Please add all required fields');
   }
 
   const clientDoc = await Client.findById(client);
@@ -59,12 +96,15 @@ const createTimeLog = async (req, res) => {
     throw new Error('Not authorized to log time for this employer');
   }
 
-  const { earnedOrdinary, earnedCasual, earnedRevenue } = calculateRevenue(date, hours, clientDoc, isPublicHoliday);
+  const { earnedOrdinary, earnedCasual, earnedRevenue } = calculateRevenue(date, finalHours, clientDoc, isPublicHoliday);
 
   const timeLog = await TimeLog.create({
     client,
     date,
-    hours,
+    startTime: startTime || undefined,
+    finishTime: finishTime || undefined,
+    breakMinutes: breakMinutes || 0,
+    hours: finalHours,
     notes,
     isPublicHoliday: isPublicHoliday || false,
     earnedOrdinary,
@@ -93,21 +133,30 @@ const updateTimeLog = async (req, res) => {
     throw new Error('User not authorized');
   }
 
-  const { client, date, hours, notes, isPublicHoliday } = req.body;
+  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday } = req.body;
+  
+  // Calculate hours if start and finish times provided
+  let finalHours = hours !== undefined ? hours : timeLog.hours;
+  if (startTime && finishTime) {
+    finalHours = calculateHoursWorked(startTime, finishTime, breakMinutes || 0);
+    if (!finalHours || finalHours <= 0) {
+      res.status(400);
+      throw new Error('Invalid start or finish time');
+    }
+  }
   
   // Re-calculate revenue if fields changed
   let earnedOrdinary = timeLog.earnedOrdinary;
   let earnedCasual = timeLog.earnedCasual;
   let earnedRevenue = timeLog.earnedRevenue;
   
-  if (client || date || hours !== undefined || isPublicHoliday !== undefined) {
+  if (client || date || hours !== undefined || startTime || finishTime || isPublicHoliday !== undefined) {
     const clientToUse = client || timeLog.client;
     const clientDoc = await Client.findById(clientToUse);
     const dateToUse = date || timeLog.date;
-    const hoursToUse = hours !== undefined ? hours : timeLog.hours;
     const holidayToUse = isPublicHoliday !== undefined ? isPublicHoliday : timeLog.isPublicHoliday;
     
-    const calculated = calculateRevenue(dateToUse, hoursToUse, clientDoc, holidayToUse);
+    const calculated = calculateRevenue(dateToUse, finalHours, clientDoc, holidayToUse);
     earnedOrdinary = calculated.earnedOrdinary;
     earnedCasual = calculated.earnedCasual;
     earnedRevenue = calculated.earnedRevenue;
@@ -115,7 +164,19 @@ const updateTimeLog = async (req, res) => {
 
   const updatedLog = await TimeLog.findByIdAndUpdate(
     req.params.id, 
-    { ...req.body, earnedOrdinary, earnedCasual, earnedRevenue }, 
+    { 
+      client: client || timeLog.client,
+      date: date || timeLog.date,
+      startTime: startTime !== undefined ? startTime : timeLog.startTime,
+      finishTime: finishTime !== undefined ? finishTime : timeLog.finishTime,
+      breakMinutes: breakMinutes !== undefined ? breakMinutes : (timeLog.breakMinutes || 0),
+      hours: finalHours,
+      notes: notes !== undefined ? notes : timeLog.notes,
+      isPublicHoliday: isPublicHoliday !== undefined ? isPublicHoliday : timeLog.isPublicHoliday,
+      earnedOrdinary, 
+      earnedCasual, 
+      earnedRevenue 
+    }, 
     { new: true }
   ).populate('client', ['name']);
 

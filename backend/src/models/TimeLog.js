@@ -16,6 +16,18 @@ const timeLogSchema = mongoose.Schema(
       type: Date,
       required: [true, 'Please add a date'],
     },
+    startTime: {
+      type: String, // Format: "HH:MM" (24-hour)
+      required: false,
+    },
+    finishTime: {
+      type: String, // Format: "HH:MM" (24-hour)
+      required: false,
+    },
+    breakMinutes: {
+      type: Number,
+      default: 0, // Break duration in minutes
+    },
     hours: {
       type: Number,
       required: [true, 'Please add hours worked'],
