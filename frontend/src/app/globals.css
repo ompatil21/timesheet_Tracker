@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer utilities {
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
   .clip-slant {
     clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
   }

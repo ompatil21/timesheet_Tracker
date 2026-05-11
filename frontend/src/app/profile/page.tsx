@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
+import { AppPageLoader, FormPanelSkeleton, InlineLoader, ListSkeleton } from '@/components/LoadingStates';
 import { motion } from 'framer-motion';
 import { Pencil, Trash2, X } from 'lucide-react';
 
@@ -22,6 +23,9 @@ export default function Profile() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -30,21 +34,29 @@ export default function Profile() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     fetchClients();
   }, [user, loading, router]);
 
-  const fetchClients = async () => {
+  const fetchClients = async (showSkeleton = true) => {
+    if (showSkeleton) setIsDataLoading(true);
     try {
       const { data } = await api.get('/clients');
       setClients(data);
     } catch (err) {
       console.error('Failed to fetch clients');
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
   const handleAddOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       if (editingId) {
         await api.put(`/clients/${editingId}`, formData);
@@ -54,9 +66,11 @@ export default function Profile() {
       setFormData({ name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: '' });
       setEditingId(null);
       setError('');
-      fetchClients();
+      await fetchClients(false);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed operation');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -75,25 +89,38 @@ export default function Profile() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this employer? This will not affect existing historical timesheets.')) {
+      setDeletingId(id);
       try {
         await api.delete(`/clients/${id}`);
         if (editingId === id) {
           setEditingId(null);
           setFormData({ name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: '' });
         }
-        fetchClients();
+        await fetchClients(false);
       } catch (err) {
         console.error('Failed to delete');
+      } finally {
+        setDeletingId(null);
       }
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <AppPageLoader label="Loading employers" />;
 
   return (
     <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors">
       <Sidebar />
       <main className="p-6 md:p-10 max-w-6xl mx-auto">
+        {isDataLoading ? (
+          <>
+            <div className="mb-12">
+              <FormPanelSkeleton />
+            </div>
+            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Active Employers</h3>
+            <ListSkeleton rows={4} />
+          </>
+        ) : (
+        <>
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,9 +221,10 @@ export default function Profile() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
+                  disabled={isSubmitting}
                   className={`clip-slant-btn px-10 py-4 text-sm font-bold tracking-widest uppercase text-white transition-all shadow-md ${editingId ? 'bg-amber-500 hover:bg-amber-600 hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'bg-racing-red hover:bg-red-700 hover:shadow-neon-red'}`}
                 >
-                  {editingId ? 'Update Employer' : 'Register Employer'}
+                  {isSubmitting ? <InlineLoader label={editingId ? 'Updating Employer' : 'Registering Employer'} /> : editingId ? 'Update Employer' : 'Register Employer'}
                 </motion.button>
               </div>
             </form>
@@ -220,8 +248,8 @@ export default function Profile() {
                   <button onClick={() => handleEdit(client)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-amber-500 transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(client._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors">
-                    <Trash2 className="w-4 h-4" />
+                  <button disabled={deletingId === client._id} onClick={() => handleDelete(client._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors disabled:cursor-wait disabled:opacity-60">
+                    {deletingId === client._id ? <InlineLoader label="" /> : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -249,6 +277,8 @@ export default function Profile() {
           )})}
           {clients.length === 0 && <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm col-span-full py-12 text-center border-2 border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl">No active employers</p>}
         </div>
+        </>
+        )}
       </main>
     </div>
   );

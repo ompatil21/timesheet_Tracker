@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
+import { AppPageLoader, MetricCardSkeleton } from '@/components/LoadingStates';
 import { motion, animate } from 'framer-motion';
 import WeeklyChart from '@/components/WeeklyChart';
 import RevenueChart from '@/components/RevenueChart';
@@ -15,6 +16,7 @@ export default function Dashboard() {
   
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'lastMonth'>('week');
   const [allLogs, setAllLogs] = useState<any[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
   const [stats, setStats] = useState({ totalHours: 0, totalPay: 0 });
   const [chartData, setChartData] = useState<any[]>([]);
@@ -25,18 +27,25 @@ export default function Dashboard() {
   const [displayPay, setDisplayPay] = useState('0.00');
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     
     const fetchStats = async () => {
+      setIsDataLoading(true);
       try {
         const { data } = await api.get('/timelogs');
         setAllLogs(data);
       } catch (err) {
         console.error('Failed to fetch stats');
+      } finally {
+        setIsDataLoading(false);
       }
     };
 
-    if (user) fetchStats();
+    fetchStats();
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -132,7 +141,7 @@ export default function Dashboard() {
     return () => { controlsHours.stop(); controlsPay.stop(); };
   }, [stats]);
 
-  if (loading || !user) return <div className="p-8 text-center min-h-screen bg-zinc-50 dark:bg-zinc-950 text-racing-red font-display animate-pulse uppercase tracking-widest transition-colors">Starting Engine...</div>;
+  if (loading || !user) return <AppPageLoader label="Starting engine" />;
 
   return (
     <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors overflow-hidden">
@@ -183,6 +192,12 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
+        {isDataLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">
+            <MetricCardSkeleton />
+            <MetricCardSkeleton />
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
@@ -244,6 +259,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </div>
+        )}
       </main>
     </div>
   );

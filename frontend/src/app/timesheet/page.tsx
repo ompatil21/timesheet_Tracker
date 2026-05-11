@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import { checkPublicHoliday } from '@/lib/holidays';
 import Sidebar from '@/components/Sidebar';
+import { AppPageLoader, FormPanelSkeleton, InlineLoader, ListSkeleton } from '@/components/LoadingStates';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, Trash2, X, AlertTriangle, Clock, Coffee, ArrowRight, Calendar, Briefcase, MessageSquare, CheckCircle2, Gift } from 'lucide-react';
 
@@ -14,6 +15,9 @@ export default function Timesheet() {
   const router = useRouter();
   const [clients, setClients] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [client, setClient] = useState('');
@@ -50,7 +54,11 @@ export default function Timesheet() {
   const calculatedHours = useTimeInput && startTime && finishTime ? calculateHoursWorked(startTime, finishTime, parseInt(breakMinutes) || 0) : null;
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     fetchData();
   }, [user, loading, router]);
 
@@ -62,7 +70,8 @@ export default function Timesheet() {
     }
   }, [date]);
 
-  const fetchData = async () => {
+  const fetchData = async (showSkeleton = true) => {
+    if (showSkeleton) setIsDataLoading(true);
     try {
       const [clientRes, logRes] = await Promise.all([
         api.get('/clients'),
@@ -74,6 +83,8 @@ export default function Timesheet() {
       if (!editingId && !date) setDate(new Date().toISOString().split('T')[0]);
     } catch (err) {
       console.error('Failed to fetch data');
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -84,6 +95,7 @@ export default function Timesheet() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const payload: any = {
         client,
@@ -114,9 +126,11 @@ export default function Timesheet() {
       setNotes('');
       setEditingId(null);
       setError('');
-      fetchData();
+      await fetchData(false);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to process timesheet');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -135,6 +149,7 @@ export default function Timesheet() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to permanently delete this timesheet?')) {
+      setDeletingId(id);
       try {
         await api.delete(`/timelogs/${id}`);
         if (editingId === id) {
@@ -146,14 +161,16 @@ export default function Timesheet() {
           setUseTimeInput(false);
           setNotes('');
         }
-        fetchData();
+        await fetchData(false);
       } catch (err) {
         console.error('Failed to delete');
+      } finally {
+        setDeletingId(null);
       }
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <AppPageLoader label="Loading timesheet" />;
 
   return (
     <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors">
@@ -170,6 +187,17 @@ export default function Timesheet() {
           <p className="text-sm text-zinc-500 uppercase tracking-widest font-bold mt-2">Track your daily hours</p>
         </motion.div>
 
+        {isDataLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <FormPanelSkeleton />
+            </div>
+            <div className="lg:col-span-2">
+              <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Timesheet History</h3>
+              <ListSkeleton rows={5} />
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -305,8 +333,8 @@ export default function Timesheet() {
                         type="button"
                         onClick={() => setUseTimeInput(false)}
                         className={`p-4 rounded-xl border-2 transition-all font-bold uppercase tracking-widest text-xs flex flex-col items-center justify-center gap-2 ${!useTimeInput
-                            ? 'bg-racing-red/10 border-racing-red text-racing-red shadow-lg shadow-racing-red/20'
-                            : 'bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-racing-red/50'
+                          ? 'bg-racing-red/10 border-racing-red text-racing-red shadow-lg shadow-racing-red/20'
+                          : 'bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-racing-red/50'
                           }`}
                       >
                         <Clock className="w-5 h-5" />
@@ -319,8 +347,8 @@ export default function Timesheet() {
                         type="button"
                         onClick={() => setUseTimeInput(true)}
                         className={`p-4 rounded-xl border-2 transition-all font-bold uppercase tracking-widest text-xs flex flex-col items-center justify-center gap-2 ${useTimeInput
-                            ? 'bg-racing-red/10 border-racing-red text-racing-red shadow-lg shadow-racing-red/20'
-                            : 'bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-racing-red/50'
+                          ? 'bg-racing-red/10 border-racing-red text-racing-red shadow-lg shadow-racing-red/20'
+                          : 'bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-racing-red/50'
                           }`}
                       >
                         <ArrowRight className="w-5 h-5" />
@@ -502,13 +530,20 @@ export default function Timesheet() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98, y: 0 }}
                     type="submit"
+                    disabled={isSubmitting}
                     className={`w-full py-4 px-6 rounded-xl font-bold uppercase tracking-widest text-sm text-white transition-all shadow-lg flex items-center justify-center gap-3 ${editingId
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg hover:shadow-amber-500/40'
-                        : 'bg-gradient-to-r from-racing-red to-red-600 hover:shadow-lg hover:shadow-racing-red/40'
-                      }`}
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg hover:shadow-amber-500/40'
+                      : 'bg-gradient-to-r from-racing-red to-red-600 hover:shadow-lg hover:shadow-racing-red/40'
+                      } disabled:cursor-wait disabled:opacity-70`}
                   >
-                    <CheckCircle2 className="w-5 h-5" />
-                    {editingId ? 'Update Entry' : 'Log Entry'}
+                    {isSubmitting ? (
+                      <InlineLoader label={editingId ? 'Updating Entry' : 'Logging Entry'} />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        {editingId ? 'Update Entry' : 'Log Entry'}
+                      </>
+                    )}
                   </motion.button>
                 </form>
               )}
@@ -607,8 +642,8 @@ export default function Timesheet() {
                           <button onClick={() => handleEdit(log)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-amber-500 transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(log._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors">
-                            <Trash2 className="w-4 h-4" />
+                          <button disabled={deletingId === log._id} onClick={() => handleDelete(log._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors disabled:cursor-wait disabled:opacity-60">
+                            {deletingId === log._id ? <InlineLoader label="" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -622,6 +657,7 @@ export default function Timesheet() {
             </div>
           </motion.div>
         </div>
+        )}
       </main>
     </div>
   );

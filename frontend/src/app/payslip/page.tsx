@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
+import { AppPageLoader, FormPanelSkeleton, InlineLoader, ListSkeleton } from '@/components/LoadingStates';
 import { UploadCloud, CheckCircle, AlertTriangle, FileText, Activity, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,6 +14,7 @@ export default function PayslipValidation() {
   const router = useRouter();
   const [payslips, setPayslips] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   
   const [file, setFile] = useState<File | null>(null);
   const [client, setClient] = useState('');
@@ -21,6 +23,7 @@ export default function PayslipValidation() {
   
   const [uploading, setUploading] = useState(false);
   const [scanStep, setScanStep] = useState(0); // For animation
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -29,11 +32,16 @@ export default function PayslipValidation() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     fetchData();
   }, [user, loading, router]);
 
-  const fetchData = async () => {
+  const fetchData = async (showSkeleton = true) => {
+    if (showSkeleton) setIsDataLoading(true);
     try {
       const [psRes, clRes] = await Promise.all([
         api.get('/payslips'),
@@ -58,6 +66,8 @@ export default function PayslipValidation() {
       setEndDate(getLocalISODate(today));
     } catch (err) {
       console.error('Failed to fetch data');
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -103,7 +113,7 @@ export default function PayslipValidation() {
         }
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
-        fetchData();
+        fetchData(false);
       }, 2400);
       
     } catch (err: any) {
@@ -115,16 +125,19 @@ export default function PayslipValidation() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this scan history?')) {
+      setDeletingId(id);
       try {
         await api.delete(`/payslips/${id}`);
-        fetchData();
+        await fetchData(false);
       } catch (err) {
         console.error('Failed to delete payslip');
+      } finally {
+        setDeletingId(null);
       }
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <AppPageLoader label="Loading payslips" />;
 
   return (
     <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors">
@@ -141,6 +154,17 @@ export default function PayslipValidation() {
           <p className="text-sm text-zinc-500 uppercase tracking-widest font-bold mt-2">AI-Powered extraction and discrepancy detection</p>
         </motion.div>
 
+        {isDataLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <FormPanelSkeleton />
+            </div>
+            <div className="lg:col-span-2">
+              <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Historical Scans</h3>
+              <ListSkeleton rows={4} />
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -325,8 +349,8 @@ export default function PayslipValidation() {
                               <CheckCircle className="w-4 h-4 mr-2" /> Match Confirmed
                             </div>
                           )}
-                          <button onClick={() => handleDelete(ps._id)} className="p-1.5 opacity-0 group-hover:opacity-100 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-racing-red transition-all">
-                            <Trash2 className="w-4 h-4" />
+                          <button disabled={deletingId === ps._id} onClick={() => handleDelete(ps._id)} className="p-1.5 opacity-0 group-hover:opacity-100 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-racing-red transition-all disabled:cursor-wait disabled:opacity-60">
+                            {deletingId === ps._id ? <InlineLoader label="" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -355,6 +379,7 @@ export default function PayslipValidation() {
             </div>
           </motion.div>
         </div>
+        )}
       </main>
     </div>
   );
