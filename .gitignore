@@ -13,6 +13,7 @@ node_modules/
 dist/
 build/
 out/
+*.tsbuildinfo
 
 # Logs
 npm-debug.log*
@@ -23,3 +24,6 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/

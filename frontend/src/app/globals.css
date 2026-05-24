@@ -31,21 +31,23 @@
   background-color: #1a1a1a;
 }
 
-input, select, textarea {
-  background-color: #ffffff !important;
-  border-color: #e4e4e7 !important;
-  color: #18181b !important;
-  transition: all 0.2s ease-out;
-}
+@layer base {
+  input, select, textarea {
+    background-color: #ffffff;
+    border-color: #e4e4e7;
+    color: #18181b;
+    transition: background-color 0.2s ease-out, border-color 0.2s ease-out, color 0.2s ease-out;
+  }
 
-.dark input, .dark select, .dark textarea {
-  background-color: #18181b !important;
-  border-color: #3f3f46 !important;
-  color: white !important;
-}
+  .dark input, .dark select, .dark textarea {
+    background-color: #18181b;
+    border-color: #3f3f46;
+    color: white;
+  }
 
-input:focus, select:focus, textarea:focus {
-  border-color: #E10600 !important;
-  box-shadow: 0 0 12px rgba(225, 6, 0, 0.4) !important;
-  outline: none !important;
+  input:focus, select:focus, textarea:focus {
+    border-color: #E10600;
+    box-shadow: 0 0 12px rgba(225, 6, 0, 0.4);
+    outline: none;
+  }
 }

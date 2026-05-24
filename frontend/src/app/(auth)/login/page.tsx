@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import api from '@/lib/axios';
-import ThreeDAuthBackground from '@/components/ThreeDAuthBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -30,8 +29,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#020202] text-white flex items-center justify-center relative overflow-hidden font-sans">
-      
-      <ThreeDAuthBackground />
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(135deg,#020202_0%,#101014_52%,#020202_100%)] pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:48px_48px] opacity-20 pointer-events-none" />
 
       {/* Toast Notification */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
@@ -57,7 +56,7 @@ export default function Login() {
         
         {/* Left Side: Headline overlaying the 3D shape */}
         <div className="w-full lg:w-1/2 mb-12 lg:mb-0 pointer-events-auto pt-20 lg:pt-0">
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: 'easeOut' }}>
+          <motion.div initial={false} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: 'easeOut' }}>
             <p className="text-xs font-bold uppercase tracking-[0.4em] text-white/50 mb-6 flex items-center gap-4">
               <span className="w-12 h-[1px] bg-white/50"></span>
               EDITION '26
@@ -74,7 +73,7 @@ export default function Login() {
 
         {/* Right Side: The Form Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 50 }} 
+          initial={false} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
           className="w-full lg:w-[450px] bg-white/[0.02] backdrop-blur-[40px] border border-white/10 p-10 lg:p-12 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] pointer-events-auto relative overflow-hidden"
