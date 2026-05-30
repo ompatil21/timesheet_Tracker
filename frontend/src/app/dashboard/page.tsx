@@ -14,7 +14,7 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'lastMonth'>('week');
+  const [timeRange, setTimeRange] = useState<'week' | 'lastWeek' | 'month'>('week');
   const [allLogs, setAllLogs] = useState<any[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
@@ -68,9 +68,15 @@ export default function Dashboard() {
     } else if (timeRange === 'month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    } else if (timeRange === 'lastMonth') {
-      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    } else if (timeRange === 'lastWeek') {
+      const currentDay = now.getDay();
+      const daysToLastMonday = currentDay === 0 ? 13 : currentDay + 6;
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - daysToLastMonday);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
     }
 
     const filteredLogs = allLogs.filter((log: any) => {
@@ -83,10 +89,10 @@ export default function Dashboard() {
     
     // Prepare Chart Data
     let wData: any[] = [];
-    if (timeRange === 'week') {
+    if (timeRange === 'week' || timeRange === 'lastWeek') {
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       wData = days.map(day => ({ day, hours: 0 }));
-      
+
       filteredLogs.forEach((log: any) => {
         const logDate = new Date(log.date);
         let dayIndex = logDate.getDay() - 1;
@@ -170,23 +176,26 @@ export default function Dashboard() {
             
             {/* Time Range Toggle */}
             <div className="flex bg-zinc-200 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 shadow-sm">
-              <button 
+              <button
+                type="button"
                 onClick={() => setTimeRange('week')}
                 className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'week' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
               >
                 This Week
               </button>
-              <button 
+              <button
+                type="button"
+                onClick={() => setTimeRange('lastWeek')}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'lastWeek' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+              >
+                Last Week
+              </button>
+              <button
+                type="button"
                 onClick={() => setTimeRange('month')}
                 className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'month' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
               >
                 This Month
-              </button>
-              <button 
-                onClick={() => setTimeRange('lastMonth')}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'lastMonth' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                Last Month
               </button>
             </div>
           </div>
