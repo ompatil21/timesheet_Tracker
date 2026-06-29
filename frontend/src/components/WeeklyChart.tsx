@@ -77,7 +77,7 @@ export default function WeeklyChart({ data, todayIndex = -1 }: WeeklyChartProps)
             content={<CustomTooltip />}
             cursor={{ fill: 'rgba(200, 241, 53, 0.04)', radius: 6 } as any}
           />
-          <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={48} isAnimationBegin={0} animationDuration={600} animationEasing="ease-out">
+          <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={48} animationBegin={0} animationDuration={600} animationEasing="ease-out">
             {data.map((entry, i) => {
               const isToday   = i === todayIndex;
               const hasHours  = entry.hours > 0;
