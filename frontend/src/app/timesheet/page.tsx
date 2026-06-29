@@ -19,6 +19,7 @@ export default function Timesheet() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [timeFilter, setTimeFilter] = useState<'week' | 'lastWeek' | 'month' | 'all'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [client, setClient] = useState('');
   const [date, setDate] = useState('');
@@ -175,6 +176,25 @@ export default function Timesheet() {
     }
   };
 
+  const filteredLogs = (() => {
+    if (timeFilter === 'all') return logs;
+    const now = new Date();
+    let start: Date, end: Date;
+    if (timeFilter === 'week') {
+      const d = now.getDay(); const diff = d === 0 ? 6 : d - 1;
+      start = new Date(now); start.setDate(now.getDate() - diff); start.setHours(0,0,0,0);
+      end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+    } else if (timeFilter === 'lastWeek') {
+      const d = now.getDay(); const diff = d === 0 ? 13 : d + 6;
+      start = new Date(now); start.setDate(now.getDate() - diff); start.setHours(0,0,0,0);
+      end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+    } else {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+    return logs.filter(l => { const d = new Date(l.date); return d >= start && d <= end; });
+  })();
+
   if (loading || !user) return <AppPageLoader label="Loading timesheet" />;
 
   return (
@@ -199,7 +219,7 @@ export default function Timesheet() {
             </div>
             <div className="lg:col-span-2">
               <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Timesheet History</h3>
-              <ListSkeleton rows={5} />
+              <ListSkeleton rows={8} />
             </div>
           </div>
         ) : (
@@ -585,11 +605,28 @@ export default function Timesheet() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Timesheet History</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                Timesheet History
+                <span className="ml-2 text-zinc-400 font-normal normal-case tracking-normal">({filteredLogs.length} entries)</span>
+              </h3>
+              <div className="flex bg-zinc-200 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 shadow-sm w-fit">
+                {(['all', 'week', 'lastWeek', 'month'] as const).map(f => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setTimeFilter(f)}
+                    className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${timeFilter === f ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                  >
+                    {f === 'all' ? 'All' : f === 'week' ? 'This Week' : f === 'lastWeek' ? 'Last Week' : 'This Month'}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="bg-white/80 dark:bg-zinc-900/80 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden backdrop-blur-sm">
               <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 <AnimatePresence>
-                  {logs.map((log, index) => (
+                  {filteredLogs.map((log, index) => (
                     <motion.li
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -679,8 +716,10 @@ export default function Timesheet() {
                     </motion.li>
                   ))}
                 </AnimatePresence>
-                {logs.length === 0 && (
-                  <li className="p-10 text-center text-zinc-500 font-bold uppercase tracking-widest text-sm">No time logged yet.</li>
+                {filteredLogs.length === 0 && (
+                  <li className="p-10 text-center text-zinc-500 font-bold uppercase tracking-widest text-sm">
+                    {logs.length === 0 ? 'No time logged yet.' : 'No entries for this period.'}
+                  </li>
                 )}
               </ul>
             </div>
