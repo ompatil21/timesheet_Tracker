@@ -19,6 +19,10 @@ const clientSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Optional higher base rate for supervisor/senior shifts (e.g. Delaware North $26.70 vs $25.85)
+    supervisorRate: {
+      type: Number,
+    },
     saturdayRate: {
       type: Number,
     },

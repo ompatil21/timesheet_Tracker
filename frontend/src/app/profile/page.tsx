@@ -14,9 +14,10 @@ interface Client {
   name: string;
   ordinaryRate: number;
   casualLoading: number;
-  saturdayRate: number;
-  sundayRate: number;
-  holidayRate: number;
+  supervisorRate?: number;
+  saturdayRate?: number;
+  sundayRate?: number;
+  holidayRate?: number;
 }
 
 export default function Profile() {
@@ -29,7 +30,7 @@ export default function Profile() {
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: ''
+    name: '', ordinaryRate: '', casualLoading: '25', supervisorRate: '', saturdayRate: '', sundayRate: '', holidayRate: ''
   });
   const [error, setError] = useState('');
 
@@ -63,7 +64,7 @@ export default function Profile() {
       } else {
         await api.post('/clients', formData);
       }
-      setFormData({ name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: '' });
+      setFormData({ name: '', ordinaryRate: '', casualLoading: '25', supervisorRate: '', saturdayRate: '', sundayRate: '', holidayRate: '' });
       setEditingId(null);
       setError('');
       await fetchClients(false);
@@ -80,6 +81,7 @@ export default function Profile() {
       name: c.name,
       ordinaryRate: c.ordinaryRate?.toString() || '',
       casualLoading: c.casualLoading?.toString() || '0',
+      supervisorRate: c.supervisorRate?.toString() || '',
       saturdayRate: c.saturdayRate?.toString() || '',
       sundayRate: c.sundayRate?.toString() || '',
       holidayRate: c.holidayRate?.toString() || ''
@@ -94,7 +96,7 @@ export default function Profile() {
         await api.delete(`/clients/${id}`);
         if (editingId === id) {
           setEditingId(null);
-          setFormData({ name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: '' });
+          setFormData({ name: '', ordinaryRate: '', casualLoading: '25', supervisorRate: '', saturdayRate: '', sundayRate: '', holidayRate: '' });
         }
         await fetchClients(false);
       } catch (err) {
@@ -143,10 +145,11 @@ export default function Profile() {
               {editingId ? 'Edit Employer Rates' : 'Register New Employer'}
             </h3>
             {editingId && (
-              <button 
+              <button
+                type="button"
                 onClick={() => {
                   setEditingId(null);
-                  setFormData({ name: '', ordinaryRate: '', casualLoading: '25', saturdayRate: '', sundayRate: '', holidayRate: '' });
+                  setFormData({ name: '', ordinaryRate: '', casualLoading: '25', supervisorRate: '', saturdayRate: '', sundayRate: '', holidayRate: '' });
                 }}
                 className="text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest flex items-center"
               >
@@ -168,18 +171,18 @@ export default function Profile() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Ordinary Rate ($)</label>
                   <input
                     type="number" step="0.01" required
                     className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
-                    placeholder="25.89"
+                    placeholder="25.85"
                     value={formData.ordinaryRate} onChange={(e) => setFormData({...formData, ordinaryRate: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Casual Load (%)</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Casual Loading (%)</label>
                   <input
                     type="number" step="1"
                     className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
@@ -188,29 +191,63 @@ export default function Profile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Saturday ($)</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Supervisor Rate ($) <span className="text-zinc-400 normal-case font-normal">optional</span></label>
                   <input
                     type="number" step="0.01"
                     className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
-                    placeholder="Optional"
+                    placeholder="e.g. 26.70"
+                    value={formData.supervisorRate} onChange={(e) => setFormData({...formData, supervisorRate: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              {/* Computed rate preview */}
+              {formData.ordinaryRate && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-zinc-50 dark:bg-zinc-950/50 rounded-lg border border-zinc-200 dark:border-zinc-800 text-center">
+                  {[
+                    { label: 'Weekday', mult: 1 + (parseFloat(formData.casualLoading) || 0) / 100 },
+                    { label: 'Saturday', mult: 1.50 },
+                    { label: 'Sunday', mult: 1.75 },
+                    { label: 'Holiday', mult: 2.25 },
+                  ].map(({ label, mult }) => {
+                    const base = parseFloat(formData.ordinaryRate) || 0;
+                    const weekdayMult = 1 + (parseFloat(formData.casualLoading) || 0) / 100;
+                    const rate = label === 'Weekday' ? base * weekdayMult : base * mult;
+                    return (
+                      <div key={label}>
+                        <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-bold">{label}</p>
+                        <p className="text-sm font-black font-display text-zinc-700 dark:text-zinc-300">${rate.toFixed(2)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Saturday Rate ($) <span className="text-zinc-400 normal-case font-normal">override</span></label>
+                  <input
+                    type="number" step="0.01"
+                    className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
+                    placeholder="Auto-computed"
                     value={formData.saturdayRate} onChange={(e) => setFormData({...formData, saturdayRate: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Sunday ($)</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Sunday Rate ($) <span className="text-zinc-400 normal-case font-normal">override</span></label>
                   <input
                     type="number" step="0.01"
                     className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
-                    placeholder="Optional"
+                    placeholder="Auto-computed"
                     value={formData.sundayRate} onChange={(e) => setFormData({...formData, sundayRate: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Holiday ($)</label>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Holiday Rate ($) <span className="text-zinc-400 normal-case font-normal">override</span></label>
                   <input
                     type="number" step="0.01"
                     className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 focus:border-racing-red transition-all font-display font-bold shadow-sm"
-                    placeholder="Optional"
+                    placeholder="Auto-computed"
                     value={formData.holidayRate} onChange={(e) => setFormData({...formData, holidayRate: e.target.value})}
                   />
                 </div>
@@ -245,33 +282,43 @@ export default function Profile() {
               <div className="flex justify-between items-start mb-4">
                 <h4 className="font-black text-xl text-zinc-900 dark:text-white uppercase tracking-wider">{client.name}</h4>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(client)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-amber-500 transition-colors">
+                  <button type="button" aria-label="Edit employer" onClick={() => handleEdit(client)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-amber-500 transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button disabled={deletingId === client._id} onClick={() => handleDelete(client._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors disabled:cursor-wait disabled:opacity-60">
+                  <button type="button" aria-label="Delete employer" disabled={deletingId === client._id} onClick={() => handleDelete(client._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-500 hover:text-racing-red transition-colors disabled:cursor-wait disabled:opacity-60">
                     {deletingId === client._id ? <InlineLoader label="" /> : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800 text-center">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Base</p>
-                  <p className="text-sm font-display font-black text-zinc-900 dark:text-white">${effectiveBase.toFixed(2)}</p>
-                  <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-1">INC LOAD</p>
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Weekday</p>
+                  <p className="text-sm font-display font-black text-zinc-900 dark:text-white">${effectiveBase.toFixed(2)}/hr</p>
+                  <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-1">${client.ordinaryRate} + {client.casualLoading || 0}% load</p>
                 </div>
-                <div className="bg-zinc-50 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800 text-center">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Sat</p>
-                  <p className="text-sm font-display font-black text-zinc-900 dark:text-white">${client.saturdayRate}</p>
-                </div>
-                <div className="bg-zinc-50 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800 text-center">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Sun</p>
-                  <p className="text-sm font-display font-black text-zinc-900 dark:text-white">${client.sundayRate}</p>
-                </div>
-                <div className="bg-zinc-50 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800 text-center">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Hol</p>
-                  <p className="text-sm font-display font-black text-zinc-900 dark:text-white">${client.holidayRate}</p>
-                </div>
+                {client.supervisorRate && (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded border border-amber-200 dark:border-amber-800 text-center">
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mb-1">Supervisor</p>
+                    <p className="text-sm font-display font-black text-amber-700 dark:text-amber-400">${(client.supervisorRate * (1 + (client.casualLoading || 0) / 100)).toFixed(2)}/hr</p>
+                    <p className="text-[8px] text-amber-500 uppercase tracking-widest mt-1">${client.supervisorRate} base</p>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Sat', val: client.saturdayRate, computed: client.ordinaryRate * 1.50 },
+                  { label: 'Sun', val: client.sundayRate,   computed: client.ordinaryRate * 1.75 },
+                  { label: 'Hol', val: client.holidayRate,  computed: client.ordinaryRate * 2.25 },
+                ].map(({ label, val, computed }) => (
+                  <div key={label} className="bg-zinc-50 dark:bg-zinc-950 p-2 rounded border border-zinc-200 dark:border-zinc-800 text-center">
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">{label}</p>
+                    <p className="text-sm font-display font-black text-zinc-900 dark:text-white">
+                      ${val != null ? Number(val).toFixed(2) : computed.toFixed(2)}
+                    </p>
+                    {val == null && <p className="text-[8px] text-zinc-400 uppercase tracking-widest mt-1">auto</p>}
+                  </div>
+                ))}
               </div>
             </motion.div>
           )})}

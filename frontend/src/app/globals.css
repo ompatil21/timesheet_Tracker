@@ -46,8 +46,8 @@
   }
 
   input:focus, select:focus, textarea:focus {
-    border-color: #E10600;
-    box-shadow: 0 0 12px rgba(225, 6, 0, 0.4);
+    border-color: #C8F135;
+    box-shadow: 0 0 0 3px rgba(200, 241, 53, 0.08);
     outline: none;
   }
 }

@@ -106,10 +106,20 @@ export default function PayslipValidation() {
       setTimeout(() => {
         setUploading(false);
         setDiagnostics(res.data);
+        const hasAllowances = res.data.extractedAllowances > 0;
+        const comparedGross = hasAllowances ? res.data.timeBasedGross : res.data.extractedGross;
         if (res.data.match) {
-          setSuccessMsg(`Perfect Match! Expected $${res.data.expectedPay.toFixed(2)}, Found $${res.data.extractedGross.toFixed(2)}`);
+          setSuccessMsg(
+            hasAllowances
+              ? `Perfect Match! Time-based pay $${comparedGross.toFixed(2)} + allowances $${res.data.extractedAllowances.toFixed(2)} = gross $${res.data.extractedGross.toFixed(2)}`
+              : `Perfect Match! Expected $${res.data.expectedPay.toFixed(2)}, Found $${res.data.extractedGross.toFixed(2)}`
+          );
         } else {
-          setError(`Discrepancy Found! Expected $${res.data.expectedPay.toFixed(2)}, Found $${res.data.extractedGross.toFixed(2)}. Difference: $${res.data.difference.toFixed(2)}`);
+          setError(
+            hasAllowances
+              ? `Discrepancy Found! Expected $${res.data.expectedPay.toFixed(2)}, Time-based pay $${comparedGross.toFixed(2)}. Difference: $${res.data.difference.toFixed(2)} (excludes $${res.data.extractedAllowances.toFixed(2)} in allowances)`
+              : `Discrepancy Found! Expected $${res.data.expectedPay.toFixed(2)}, Found $${res.data.extractedGross.toFixed(2)}. Difference: $${res.data.difference.toFixed(2)}`
+          );
         }
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -299,10 +309,16 @@ export default function PayslipValidation() {
                 <div className="space-y-2 opacity-80">
                   <p>{'>'} MATCH_STATUS: {diagnostics.match ? 'SUCCESS' : 'FAILED'}</p>
                   <p>{'>'} TOLERANCE_RULE: +/- 0.05 ACTV</p>
-                  <p>{'>'} APP_EXPECTED: ${diagnostics.expectedPay.toFixed(2)}</p>
-                  <p>{'>'} PDF_EXTRACTED_GROSS: ${diagnostics.extractedGross.toFixed(2)}</p>
-                  {diagnostics.extractedNett && <p>{'>'} PDF_EXTRACTED_NETT: ${diagnostics.extractedNett.toFixed(2)}</p>}
-                  {diagnostics.extractedTax && <p>{'>'} PDF_EXTRACTED_TAX: ${diagnostics.extractedTax.toFixed(2)}</p>}
+                  <p>{'>'} APP_EXPECTED (TIME-BASED): ${diagnostics.expectedPay.toFixed(2)}</p>
+                  <p>{'>'} PDF_GROSS_TOTAL: ${diagnostics.extractedGross.toFixed(2)}</p>
+                  {diagnostics.extractedAllowances > 0 && (
+                    <>
+                      <p className="text-yellow-400">{'>'} PDF_ALLOWANCES_DETECTED: ${diagnostics.extractedAllowances.toFixed(2)}</p>
+                      <p className="text-yellow-400">{'>'} PDF_TIME_BASED_GROSS: ${diagnostics.timeBasedGross.toFixed(2)}</p>
+                    </>
+                  )}
+                  {diagnostics.extractedNett != null && <p>{'>'} PDF_NET: ${diagnostics.extractedNett.toFixed(2)}</p>}
+                  {diagnostics.extractedTax != null && <p>{'>'} PDF_TAX: ${diagnostics.extractedTax.toFixed(2)}</p>}
                   <p>{'>'} DELTA: ${diagnostics.difference.toFixed(2)}</p>
                 </div>
               </motion.div>

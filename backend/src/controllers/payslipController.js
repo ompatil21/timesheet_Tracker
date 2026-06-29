@@ -30,9 +30,11 @@ const uploadPayslip = async (req, res) => {
     }
 
     // 1. Fetch Expected Logs
+    // Parse as UTC dates so filtering is consistent with how logs are stored (UTC midnight)
     const start = new Date(periodStart);
+    start.setUTCHours(0, 0, 0, 0);
     const end = new Date(periodEnd);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCHours(23, 59, 59, 999);
 
     // Duplicate Check
     const existingPayslip = await Payslip.findOne({
@@ -81,25 +83,62 @@ const uploadPayslip = async (req, res) => {
     let extractedNett = null;
     let extractedTax = null;
 
-    // Look for GROSS followed by numbers
-    const grossMatch = pdfText.match(/GROSS\s+\$?\s*([\d,\.]+)/i) || pdfText.match(/TOTAL\s+PAY\s+\$?\s*([\d,\.]+)/i);
-    if (grossMatch) extractedGross = parseFloat(grossMatch[1].replace(/,/g, ''));
+    // Match GROSS but NOT GROSS followed by "EARNINGS" or "PAY" labels elsewhere —
+    // try most-specific patterns first, then fall back to looser ones.
+    // Each pattern looks for the label then the first dollar amount (skipping optional $ sign).
+    const extractAmount = (text, ...patterns) => {
+      for (const pattern of patterns) {
+        const m = text.match(pattern);
+        if (m) return parseFloat(m[1].replace(/,/g, ''));
+      }
+      return null;
+    };
 
-    // Look for NETT or NET PAY
-    const nettMatch = pdfText.match(/NETT\s+\$?\s*([\d,\.]+)/i) || pdfText.match(/NET\s+PAY\s+\$?\s*([\d,\.]+)/i);
-    if (nettMatch) extractedNett = parseFloat(nettMatch[1].replace(/,/g, ''));
+    extractedGross = extractAmount(
+      pdfText,
+      /GROSS\s+PAY\s+\$?\s*([\d,\.]+)/i,
+      /GROSS\s+EARNINGS\s+\$?\s*([\d,\.]+)/i,
+      /TOTAL\s+GROSS\s+\$?\s*([\d,\.]+)/i,
+      /TOTAL\s+EARNINGS\s+\$?\s*([\d,\.]+)/i,
+      /TOTAL\s+PAY\s+\$?\s*([\d,\.]+)/i,
+      // Plain GROSS — must NOT be followed by letters (avoids matching "GROSS TAXABLE" etc.)
+      /\bGROSS\b\s+\$?\s*([\d,\.]+)/i,
+    );
 
-    // Look for TAX
-    const taxMatch = pdfText.match(/TAX\s+\$?\s*([\d,\.]+)/i);
-    if (taxMatch) extractedTax = parseFloat(taxMatch[1].replace(/,/g, ''));
+    extractedNett = extractAmount(
+      pdfText,
+      /NET\s+INCOME\s+\$?\s*([\d,\.]+)/i,
+      /NET\s+PAY\s+\$?\s*([\d,\.]+)/i,
+      /\bNETT?\b\s+\$?\s*([\d,\.]+)/i,
+    );
+
+    // TAX must not match TAXABLE — require end-of-word boundary
+    extractedTax = extractAmount(
+      pdfText,
+      /\bTAX\b\s+\$?\s*([\d,\.]+)/i,
+      /INCOME\s+TAX\s+\$?\s*([\d,\.]+)/i,
+    );
+
+    // Extract allowances included in gross (e.g. Late Shift Allowance on ADP payslips).
+    // We look for the Pre/Post Tax Allows/Deds summary amounts — these are non-time-based
+    // payments already baked into the gross figure.
+    let extractedAllowances = 0;
+    const preTaxAllow = pdfText.match(/pre\s+tax\s+allows?\/deds?\s+\$?\s*([\d,\.]+)/i);
+    if (preTaxAllow) extractedAllowances += parseFloat(preTaxAllow[1].replace(/,/g, ''));
+    const postTaxAllow = pdfText.match(/post\s+tax\s+allows?\/deds?\s+\$?\s*([\d,\.]+)/i);
+    if (postTaxAllow) extractedAllowances += parseFloat(postTaxAllow[1].replace(/,/g, ''));
+    extractedAllowances = parseFloat(extractedAllowances.toFixed(2));
+
+    // Time-based gross = what the employer paid purely for hours worked
+    const timeBasedGross = parseFloat((extractedGross - extractedAllowances).toFixed(2));
 
     // If we couldn't extract the gross pay, we cannot validate
     if (extractedGross === null) {
       return res.status(400).json({ message: 'Could not automatically find the Gross Pay amount in this PDF. Please check the file.' });
     }
 
-    // 4. Comparison Logic (With $0.05 Tolerance)
-    const difference = Math.abs(expectedPay - extractedGross);
+    // 4. Comparison: match expectedPay (hours × rate) against time-based gross only
+    const difference = parseFloat(Math.abs(expectedPay - timeBasedGross).toFixed(2));
     const isMatch = difference <= 0.05;
 
     // Create record
@@ -111,11 +150,11 @@ const uploadPayslip = async (req, res) => {
       paidHours: expectedHours,
       paidAmount: extractedGross,
       status: isMatch ? 'match' : 'mismatch',
-      fileUrl: 'memory' // Since we don't save to disk
+      fileUrl: 'memory'
     });
 
     const savedPayslip = await payslip.save();
-    
+
     res.status(201).json({
       message: 'Payslip parsed successfully',
       match: isMatch,
@@ -124,6 +163,8 @@ const uploadPayslip = async (req, res) => {
       extractedGross,
       extractedNett,
       extractedTax,
+      extractedAllowances,
+      timeBasedGross,
       difference,
       payslip: savedPayslip,
     });

@@ -39,6 +39,10 @@ const timeLogSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isSupervisorShift: {
+      type: Boolean,
+      default: false,
+    },
     earnedOrdinary: {
       type: Number,
       required: true,

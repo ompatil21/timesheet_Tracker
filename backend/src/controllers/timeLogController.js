@@ -26,29 +26,43 @@ const calculateHoursWorked = (startTime, finishTime, breakMinutes = 0) => {
 };
 
 // Helper to calculate revenue split
-const calculateRevenue = (dateString, hours, client, isPublicHoliday) => {
+// isSupervisorShift: use client.supervisorRate as the base instead of ordinaryRate (if set)
+const calculateRevenue = (dateString, hours, client, isPublicHoliday, isSupervisorShift = false) => {
   const date = new Date(dateString);
-  const day = date.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  const earnedOrdinary = hours * client.ordinaryRate;
+  // Use UTC day so rate selection is consistent with how dates are stored (UTC midnight)
+  const day = date.getUTCDay(); // 0 = Sunday, 6 = Saturday
+
+  // Choose base rate: supervisor rate when flagged and available, otherwise ordinary rate
+  const baseRate = (isSupervisorShift && client.supervisorRate) ? client.supervisorRate : client.ordinaryRate;
   const loadingPct = client.casualLoading || 0;
-  const earnedCasual = hours * (client.ordinaryRate * (loadingPct / 100));
-  
-  const standardPay = earnedOrdinary + earnedCasual;
+
+  const earnedOrdinary = hours * baseRate;
+  const earnedCasual = hours * (baseRate * (loadingPct / 100));
+  const weekdayPay = earnedOrdinary + earnedCasual; // base × (1 + loading%)
+
+  // Derive penalty rates from base if not explicitly set on the client
+  const satRate  = client.saturdayRate  ?? baseRate * (1 + loadingPct / 100) * (50 / 25 ); // not ideal fallback
+  const sunRate  = client.sundayRate    ?? baseRate * (1 + loadingPct / 100) * (75 / 25 );
+  const holRate  = client.holidayRate   ?? baseRate * (1 + loadingPct / 100) * (125 / 25);
+
+  // For supervisor shifts on weekends/holidays, scale the stored flat rates by the ratio
+  // of supervisor base to ordinary base so the correct penalty amount is used
+  const scale = (isSupervisorShift && client.supervisorRate && client.ordinaryRate)
+    ? client.supervisorRate / client.ordinaryRate
+    : 1;
+
   let earnedRevenue = 0;
-  
-  if (isPublicHoliday && client.holidayRate) {
-    earnedRevenue = hours * client.holidayRate;
-  } else if (day === 0 && client.sundayRate) {
-    earnedRevenue = hours * client.sundayRate;
-  } else if (day === 6 && client.saturdayRate) {
-    earnedRevenue = hours * client.saturdayRate;
+  if (isPublicHoliday) {
+    earnedRevenue = hours * holRate * scale;
+  } else if (day === 0) {
+    earnedRevenue = hours * sunRate * scale;
+  } else if (day === 6) {
+    earnedRevenue = hours * satRate * scale;
   } else {
-    // Standard weekday or fallback if penalty rate not defined
-    earnedRevenue = standardPay;
+    earnedRevenue = weekdayPay;
   }
-  
-  return { earnedOrdinary, earnedCasual, earnedRevenue };
+
+  return { earnedOrdinary, earnedCasual, earnedRevenue: parseFloat(earnedRevenue.toFixed(2)) };
 };
 
 // @desc    Get timelogs
@@ -65,7 +79,7 @@ const getTimeLogs = async (req, res) => {
 // @route   POST /api/timelogs
 // @access  Private
 const createTimeLog = async (req, res) => {
-  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday } = req.body;
+  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday, isSupervisorShift } = req.body;
 
   // Calculate hours if start and finish times provided
   let finalHours = hours;
@@ -96,7 +110,8 @@ const createTimeLog = async (req, res) => {
     throw new Error('Not authorized to log time for this employer');
   }
 
-  const { earnedOrdinary, earnedCasual, earnedRevenue } = calculateRevenue(date, finalHours, clientDoc, isPublicHoliday);
+  const supervisorShift = !!(isSupervisorShift && clientDoc.supervisorRate);
+  const { earnedOrdinary, earnedCasual, earnedRevenue } = calculateRevenue(date, finalHours, clientDoc, isPublicHoliday, supervisorShift);
 
   const timeLog = await TimeLog.create({
     client,
@@ -107,6 +122,7 @@ const createTimeLog = async (req, res) => {
     hours: finalHours,
     notes,
     isPublicHoliday: isPublicHoliday || false,
+    isSupervisorShift: supervisorShift,
     earnedOrdinary,
     earnedCasual,
     earnedRevenue,
@@ -133,7 +149,7 @@ const updateTimeLog = async (req, res) => {
     throw new Error('User not authorized');
   }
 
-  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday } = req.body;
+  const { client, date, hours, startTime, finishTime, breakMinutes, notes, isPublicHoliday, isSupervisorShift } = req.body;
   
   // Calculate hours if start and finish times provided
   let finalHours = hours !== undefined ? hours : timeLog.hours;
@@ -145,26 +161,29 @@ const updateTimeLog = async (req, res) => {
     }
   }
   
-  // Re-calculate revenue if fields changed
+  // Re-calculate revenue if any relevant field changed
   let earnedOrdinary = timeLog.earnedOrdinary;
   let earnedCasual = timeLog.earnedCasual;
   let earnedRevenue = timeLog.earnedRevenue;
-  
-  if (client || date || hours !== undefined || startTime || finishTime || isPublicHoliday !== undefined) {
-    const clientToUse = client || timeLog.client;
-    const clientDoc = await Client.findById(clientToUse);
+  let resolvedSupervisorShift = timeLog.isSupervisorShift;
+
+  if (client || date || hours !== undefined || startTime || finishTime || isPublicHoliday !== undefined || isSupervisorShift !== undefined) {
+    const clientDoc = await Client.findById(client || timeLog.client);
     const dateToUse = date || timeLog.date;
     const holidayToUse = isPublicHoliday !== undefined ? isPublicHoliday : timeLog.isPublicHoliday;
-    
-    const calculated = calculateRevenue(dateToUse, finalHours, clientDoc, holidayToUse);
+    resolvedSupervisorShift = isSupervisorShift !== undefined
+      ? !!(isSupervisorShift && clientDoc.supervisorRate)
+      : timeLog.isSupervisorShift;
+
+    const calculated = calculateRevenue(dateToUse, finalHours, clientDoc, holidayToUse, resolvedSupervisorShift);
     earnedOrdinary = calculated.earnedOrdinary;
     earnedCasual = calculated.earnedCasual;
     earnedRevenue = calculated.earnedRevenue;
   }
 
   const updatedLog = await TimeLog.findByIdAndUpdate(
-    req.params.id, 
-    { 
+    req.params.id,
+    {
       client: client || timeLog.client,
       date: date || timeLog.date,
       startTime: startTime !== undefined ? startTime : timeLog.startTime,
@@ -173,10 +192,11 @@ const updateTimeLog = async (req, res) => {
       hours: finalHours,
       notes: notes !== undefined ? notes : timeLog.notes,
       isPublicHoliday: isPublicHoliday !== undefined ? isPublicHoliday : timeLog.isPublicHoliday,
-      earnedOrdinary, 
-      earnedCasual, 
-      earnedRevenue 
-    }, 
+      isSupervisorShift: resolvedSupervisorShift,
+      earnedOrdinary,
+      earnedCasual,
+      earnedRevenue,
+    },
     { new: true }
   ).populate('client', ['name']);
 

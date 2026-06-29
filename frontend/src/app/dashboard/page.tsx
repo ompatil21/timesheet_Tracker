@@ -91,23 +91,27 @@ export default function Dashboard() {
     let wData: any[] = [];
     if (timeRange === 'week' || timeRange === 'lastWeek') {
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      wData = days.map(day => ({ day, hours: 0 }));
+      wData = days.map(day => ({ day, hours: 0, revenue: 0 }));
 
       filteredLogs.forEach((log: any) => {
         const logDate = new Date(log.date);
         let dayIndex = logDate.getDay() - 1;
         if (dayIndex === -1) dayIndex = 6;
         wData[dayIndex].hours += log.hours;
+        wData[dayIndex].revenue += log.earnedRevenue || 0;
       });
     } else {
       const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
-      wData = weeks.map(day => ({ day, hours: 0 }));
-      
+      wData = weeks.map(day => ({ day, hours: 0, revenue: 0 }));
+
       filteredLogs.forEach((log: any) => {
         const logDate = new Date(log.date);
         const dayOfMonth = logDate.getDate();
         const weekIndex = Math.floor((dayOfMonth - 1) / 7);
-        if (wData[weekIndex]) wData[weekIndex].hours += log.hours;
+        if (wData[weekIndex]) {
+          wData[weekIndex].hours += log.hours;
+          wData[weekIndex].revenue += log.earnedRevenue || 0;
+        }
       });
     }
 
@@ -234,7 +238,10 @@ export default function Dashboard() {
               <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
                 {timeRange === 'week' ? "Weekly Breakdown" : "Monthly Breakdown"}
               </h4>
-              <WeeklyChart data={chartData} />
+              <WeeklyChart
+                data={chartData}
+                todayIndex={timeRange === 'week' ? (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })() : -1}
+              />
             </div>
           </motion.div>
 

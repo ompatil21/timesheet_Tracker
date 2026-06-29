@@ -28,6 +28,7 @@ export default function Timesheet() {
   const [breakMinutes, setBreakMinutes] = useState('');
   const [useTimeInput, setUseTimeInput] = useState(false);
   const [notes, setNotes] = useState('');
+  const [isSupervisorShift, setIsSupervisorShift] = useState(false);
   const [error, setError] = useState('');
   const [detectedHoliday, setDetectedHoliday] = useState<{ isHoliday: boolean; name?: string }>({ isHoliday: false });
 
@@ -97,11 +98,13 @@ export default function Timesheet() {
 
     setIsSubmitting(true);
     try {
+      const selectedClient = clients.find((c: any) => c._id === client);
       const payload: any = {
         client,
         date,
         notes,
-        isPublicHoliday: detectedHoliday.isHoliday // Auto-include detected holiday
+        isPublicHoliday: detectedHoliday.isHoliday,
+        isSupervisorShift: !!(selectedClient?.supervisorRate && isSupervisorShift),
       };
 
       if (useTimeInput && startTime && finishTime) {
@@ -124,6 +127,7 @@ export default function Timesheet() {
       setBreakMinutes('');
       setUseTimeInput(false);
       setNotes('');
+      setIsSupervisorShift(false);
       setEditingId(null);
       setError('');
       await fetchData(false);
@@ -144,6 +148,7 @@ export default function Timesheet() {
     setBreakMinutes(log.breakMinutes?.toString() || '');
     setUseTimeInput(!!(log.startTime && log.finishTime));
     setNotes(log.notes || '');
+    setIsSupervisorShift(log.isSupervisorShift || false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -312,6 +317,30 @@ export default function Timesheet() {
                       )}
                     </AnimatePresence>
                   </motion.div>
+
+                  {/* Supervisor shift toggle — only shown when selected client has a supervisorRate */}
+                  {clients.find((c: any) => c._id === client)?.supervisorRate && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center justify-between p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20"
+                    >
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Supervisor Shift</p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5 font-medium">
+                          Base ${clients.find((c: any) => c._id === client)?.supervisorRate}/hr instead of ${clients.find((c: any) => c._id === client)?.ordinaryRate}/hr
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsSupervisorShift(v => !v)}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${isSupervisorShift ? 'bg-amber-500' : 'bg-zinc-300 dark:bg-zinc-600'}`}
+                        aria-label="Toggle supervisor shift"
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isSupervisorShift ? 'translate-x-6' : ''}`} />
+                      </button>
+                    </motion.div>
+                  )}
 
                   {/* Step 2: Time Input Mode */}
                   <motion.div

@@ -12,20 +12,23 @@ const getClients = async (req, res) => {
 // @route   POST /api/clients
 // @access  Private
 const createClient = async (req, res) => {
-  const { name, ordinaryRate, casualLoading, saturdayRate, sundayRate, holidayRate } = req.body;
+  const { name, ordinaryRate, casualLoading, supervisorRate, saturdayRate, sundayRate, holidayRate } = req.body;
 
   if (!name || ordinaryRate === undefined) {
     res.status(400);
     throw new Error('Please add an employer name and ordinary rate');
   }
 
+  const toRate = (val) => (val !== undefined && val !== '' && val !== null ? Number(val) : undefined);
+
   const client = await Client.create({
     name,
-    ordinaryRate,
-    casualLoading: casualLoading || 0,
-    saturdayRate: saturdayRate || undefined,
-    sundayRate: sundayRate || undefined,
-    holidayRate: holidayRate || undefined,
+    ordinaryRate: Number(ordinaryRate),
+    casualLoading: casualLoading !== undefined && casualLoading !== '' ? Number(casualLoading) : 0,
+    supervisorRate: toRate(supervisorRate),
+    saturdayRate: toRate(saturdayRate),
+    sundayRate: toRate(sundayRate),
+    holidayRate: toRate(holidayRate),
     user: req.user.id,
   });
 
@@ -48,7 +51,21 @@ const updateClient = async (req, res) => {
     throw new Error('User not authorized');
   }
 
-  const updatedClient = await Client.findByIdAndUpdate(req.params.id, req.body, {
+  const toRate = (val) => (val !== undefined && val !== '' && val !== null ? Number(val) : undefined);
+
+  const allowedUpdates = {
+    name: req.body.name,
+    ordinaryRate: req.body.ordinaryRate !== undefined ? Number(req.body.ordinaryRate) : undefined,
+    casualLoading: req.body.casualLoading !== undefined && req.body.casualLoading !== '' ? Number(req.body.casualLoading) : undefined,
+    supervisorRate: toRate(req.body.supervisorRate),
+    saturdayRate: toRate(req.body.saturdayRate),
+    sundayRate: toRate(req.body.sundayRate),
+    holidayRate: toRate(req.body.holidayRate),
+  };
+  // Remove undefined keys so we don't unset fields that weren't sent
+  Object.keys(allowedUpdates).forEach(k => allowedUpdates[k] === undefined && delete allowedUpdates[k]);
+
+  const updatedClient = await Client.findByIdAndUpdate(req.params.id, allowedUpdates, {
     new: true,
   });
 
