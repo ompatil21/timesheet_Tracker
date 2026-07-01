@@ -234,34 +234,56 @@ export default function PayslipValidation() {
                     </div>
                   </div>
 
-                  <div className={`mt-6 border-2 border-dashed rounded-xl p-8 text-center transition-all relative overflow-hidden ${uploading ? 'border-racing-red bg-red-50/10 dark:bg-red-900/10' : file ? 'border-green-500 bg-green-50/10 dark:bg-green-900/10' : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50 hover:border-racing-red cursor-pointer'}`}>
+                  {/* Hidden file input — triggered by the label below */}
+                  <input
+                    id="payslip-file-input"
+                    type="file"
+                    accept=".pdf"
+                    ref={fileInputRef}
+                    disabled={uploading}
+                    className="sr-only"
+                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                  />
+
+                  <label
+                    htmlFor="payslip-file-input"
+                    className={`mt-6 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 text-center transition-all relative overflow-hidden select-none
+                      ${uploading
+                        ? 'border-racing-red bg-red-50/10 dark:bg-red-900/10 cursor-wait'
+                        : file
+                          ? 'border-green-500 bg-green-50/10 dark:bg-green-900/10 cursor-pointer hover:border-green-400'
+                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50 cursor-pointer hover:border-racing-red hover:bg-zinc-100 dark:hover:bg-zinc-900/80'
+                      }`}
+                  >
                     {uploading && (
-                      <motion.div 
+                      <motion.div
                         initial={{ top: '-10%' }}
                         animate={{ top: '110%' }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                        className="absolute left-0 right-0 h-1 bg-racing-red shadow-[0_0_15px_rgba(220,38,38,0.8)] z-0"
+                        className="absolute left-0 right-0 h-1 bg-racing-red shadow-[0_0_15px_rgba(220,38,38,0.8)]"
                       />
                     )}
-                    <div className="relative z-10 flex flex-col items-center">
-                      {file && !uploading ? (
-                        <FileText className="w-12 h-12 text-green-500 mb-4" />
-                      ) : (
-                        <UploadCloud className={`w-12 h-12 mb-4 transition-colors ${uploading ? 'text-racing-red' : 'text-zinc-400 group-hover:text-racing-red'}`} />
-                      )}
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-2">
-                        {file ? file.name : uploading ? 'Extracting Text...' : 'Upload PDF Document'}
+
+                    {file && !uploading ? (
+                      <FileText className="w-10 h-10 text-green-500" />
+                    ) : (
+                      <UploadCloud className={`w-10 h-10 transition-colors ${uploading ? 'text-racing-red animate-pulse' : 'text-zinc-400'}`} />
+                    )}
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-300">
+                        {uploading ? 'Extracting text…' : file ? file.name : 'Click anywhere to upload PDF'}
                       </p>
-                      {!uploading && (
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-widest">Max Size: 5MB</p>
+                      {!uploading && !file && (
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-widest mt-1">PDF only · Max 5 MB</p>
+                      )}
+                      {file && !uploading && (
+                        <p className="text-[10px] text-green-500 uppercase tracking-widest mt-1 font-bold">
+                          {(file.size / 1024).toFixed(0)} KB · Click to change
+                        </p>
                       )}
                     </div>
-                    <input
-                      type="file" accept=".pdf" ref={fileInputRef} disabled={uploading}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
-                      onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                    />
-                  </div>
+                  </label>
 
                   {uploading && (
                     <div className="space-y-2 mt-4">

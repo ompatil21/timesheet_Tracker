@@ -19,7 +19,7 @@ export default function Timesheet() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [timeFilter, setTimeFilter] = useState<'week' | 'lastWeek' | 'month' | 'all'>('all');
+  const [timeFilter, setTimeFilter] = useState<'week' | 'lastWeek' | 'month'>('week');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [client, setClient] = useState('');
   const [date, setDate] = useState('');
@@ -177,7 +177,6 @@ export default function Timesheet() {
   };
 
   const filteredLogs = (() => {
-    if (timeFilter === 'all') return logs;
     const now = new Date();
     let start: Date, end: Date;
     if (timeFilter === 'week') {
@@ -611,14 +610,14 @@ export default function Timesheet() {
                 <span className="ml-2 text-zinc-400 font-normal normal-case tracking-normal">({filteredLogs.length} entries)</span>
               </h3>
               <div className="flex bg-zinc-200 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 shadow-sm w-fit">
-                {(['all', 'week', 'lastWeek', 'month'] as const).map(f => (
+                {(['week', 'lastWeek', 'month'] as const).map(f => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setTimeFilter(f)}
                     className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${timeFilter === f ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
                   >
-                    {f === 'all' ? 'All' : f === 'week' ? 'This Week' : f === 'lastWeek' ? 'Last Week' : 'This Month'}
+                    {f === 'week' ? 'This Week' : f === 'lastWeek' ? 'Last Week' : 'This Month'}
                   </button>
                 ))}
               </div>
