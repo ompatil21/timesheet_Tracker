@@ -99,9 +99,7 @@ export default function PayslipValidation() {
       setTimeout(() => setScanStep(2), 800);
       setTimeout(() => setScanStep(3), 1600);
       
-      const res = await api.post('/payslips', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/payslips', formData);
       
       setTimeout(() => {
         setUploading(false);
