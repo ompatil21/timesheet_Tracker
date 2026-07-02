@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Timesheet Tracker API",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.17"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
@@ -19,6 +22,7 @@
     "mongoose": "^8.4.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "node-ical": "^0.26.1",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {

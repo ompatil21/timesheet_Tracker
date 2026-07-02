@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const { uploadPayslip, getPayslips, deletePayslip } = require('../controllers/payslipController');
 const { protect } = require('../middleware/auth');
+const asyncHandler = require('../utils/asyncHandler');
 
 // Configure Multer for memory storage
 const storage = multer.memoryStorage();
@@ -19,10 +20,10 @@ const upload = multer({
 });
 
 router.route('/')
-  .get(protect, getPayslips)
-  .post(protect, upload.single('payslip'), uploadPayslip);
+  .get(protect, asyncHandler(getPayslips))
+  .post(protect, upload.single('payslip'), asyncHandler(uploadPayslip));
 
 router.route('/:id')
-  .delete(protect, deletePayslip);
+  .delete(protect, asyncHandler(deletePayslip));
 
 module.exports = router;

@@ -7,8 +7,11 @@ import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
 import { AppPageLoader, MetricCardSkeleton } from '@/components/LoadingStates';
 import { motion, animate } from 'framer-motion';
+import Link from 'next/link';
 import WeeklyChart from '@/components/WeeklyChart';
 import RevenueChart from '@/components/RevenueChart';
+import { SyncStatus, SyncStatusBadge } from '@/components/HumanforceSync';
+import { CalendarClock } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -16,6 +19,9 @@ export default function Dashboard() {
   
   const [timeRange, setTimeRange] = useState<'week' | 'lastWeek' | 'month'>('week');
   const [allLogs, setAllLogs] = useState<any[]>([]);
+  const [shifts, setShifts] = useState<any[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [scheduledHours, setScheduledHours] = useState(0);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const [stats, setStats] = useState({ totalHours: 0, totalPay: 0 });
@@ -42,6 +48,17 @@ export default function Dashboard() {
         console.error('Failed to fetch stats');
       } finally {
         setIsDataLoading(false);
+      }
+      // Humanforce data is optional — never block the dashboard on it
+      try {
+        const [shiftsRes, statusRes] = await Promise.all([
+          api.get('/sync/shifts'),
+          api.get('/sync'),
+        ]);
+        setShifts(shiftsRes.data);
+        setSyncStatus(statusRes.data);
+      } catch (err) {
+        console.error('Failed to fetch sync data');
       }
     };
 
@@ -135,7 +152,15 @@ export default function Dashboard() {
     setChartData(wData);
     setRevenueData(rData);
 
-  }, [timeRange, allLogs]);
+    // Scheduled hours from Humanforce shifts within the same range
+    const scheduled = shifts.reduce((sum: number, s: any) => {
+      const start = new Date(s.start);
+      if (start < startDate || start > endDate) return sum;
+      return sum + (new Date(s.end).getTime() - start.getTime()) / 3600000;
+    }, 0);
+    setScheduledHours(scheduled);
+
+  }, [timeRange, allLogs, shifts]);
 
   useEffect(() => {
     const controlsHours = animate(0, stats.totalHours, {
@@ -204,6 +229,49 @@ export default function Dashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Humanforce scheduled vs logged */}
+        {syncStatus?.configured && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-6 relative z-20"
+          >
+            <Link
+              href="/calendar"
+              className="flex flex-wrap items-center justify-between gap-4 bg-white/60 dark:bg-zinc-900/40 px-6 py-4 rounded-xl border border-white/20 dark:border-zinc-800/50 backdrop-blur-xl shadow-lg hover:border-racing-red/40 transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <CalendarClock className="w-5 h-5 text-racing-red" />
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                    {timeRange === 'week' ? 'This week' : timeRange === 'lastWeek' ? 'Last week' : 'This month'}
+                  </span>
+                  <span className="font-display font-black text-lg">
+                    <span className="text-racing-red">{scheduledHours.toFixed(1)}</span>
+                    <span className="text-xs text-zinc-500 uppercase mx-1">hrs scheduled</span>
+                    <span className="text-zinc-400 mx-1">vs</span>
+                    <span className="text-green-600 dark:text-green-500">{stats.totalHours.toFixed(1)}</span>
+                    <span className="text-xs text-zinc-500 uppercase ml-1">hrs logged</span>
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {syncStatus.lastSyncStatus === 'failed' ? (
+                  <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">
+                    Humanforce sync failed — check your link
+                  </span>
+                ) : (
+                  <SyncStatusBadge status={syncStatus} />
+                )}
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest group-hover:text-racing-red transition-colors">
+                  View calendar →
+                </span>
+              </div>
+            </Link>
+          </motion.div>
+        )}
 
         {isDataLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">

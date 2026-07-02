@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
+import HumanforceSync from '@/components/HumanforceSync';
 import { AppPageLoader, FormPanelSkeleton, InlineLoader, ListSkeleton } from '@/components/LoadingStates';
 import { motion } from 'framer-motion';
 import { Pencil, Trash2, X } from 'lucide-react';
@@ -324,6 +325,9 @@ export default function Profile() {
           )})}
           {clients.length === 0 && <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm col-span-full py-12 text-center border-2 border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl">No active employers</p>}
         </div>
+
+        <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4 mt-12">Integrations</h3>
+        <HumanforceSync />
         </>
         )}
       </main>

@@ -1,6 +1,6 @@
 'use client';
 import { useAuth } from '@/context/AuthContext';
-import { LayoutDashboard, Clock, FileText, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clock, CalendarDays, FileText, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
@@ -13,6 +13,7 @@ export default function Sidebar() {
   const navs = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Timesheet', path: '/timesheet', icon: Clock },
+    { name: 'Calendar', path: '/calendar', icon: CalendarDays },
     { name: 'Payslips', path: '/payslip', icon: FileText },
     { name: 'Employers', path: '/profile', icon: Settings },
   ];
