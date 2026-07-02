@@ -4,7 +4,7 @@
   "description": "Timesheet Tracker API",
   "main": "server.js",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node src/server.js",
