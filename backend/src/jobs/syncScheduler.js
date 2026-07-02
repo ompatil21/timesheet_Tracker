@@ -1,7 +1,10 @@
 const { syncAllUsers } = require('../services/humanforceSync');
 
-// Humanforce refreshes its feed every 5-15 min; polling every 15 min is plenty.
-const SYNC_INTERVAL_MS = 15 * 60 * 1000;
+// Humanforce refreshes its feed every 5-15 min; 15 min polling is the floor.
+// Raise SYNC_INTERVAL_MINUTES in prod if credit matters more than freshness —
+// especially with Railway App Sleeping, where outbound fetches prevent sleep.
+const intervalMinutes = Math.max(15, parseInt(process.env.SYNC_INTERVAL_MINUTES, 10) || 15);
+const SYNC_INTERVAL_MS = intervalMinutes * 60 * 1000;
 const STARTUP_DELAY_MS = 10 * 1000;
 
 let isRunning = false;
