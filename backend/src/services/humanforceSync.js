@@ -109,15 +109,60 @@ const fetchFeedText = async (url) => {
   return Buffer.concat(chunks).toString('utf8');
 };
 
-// Fetch an ICS feed and return normalized shift objects.
-const fetchAndParseIcs = async (url) => {
-  const text = await fetchFeedText(url);
+// Humanforce writes shift times as "floating" local times (no Z, no TZID) and
+// names the roster's zone once, in X-WR-TIMEZONE. node-ical reads floating
+// times in the server's own zone, so on a UTC host every shift lands hours
+// off (and evening shifts on the wrong day). Returns null if the feed names
+// no usable zone, in which case times are left as node-ical parsed them.
+const getFeedTimeZone = (text) => {
+  const match = text.match(/^X-WR-TIMEZONE:(.+)$/m);
+  if (!match) return null;
+  const timeZone = match[1].trim();
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone });
+    return timeZone;
+  } catch {
+    return null;
+  }
+};
 
+// Offset of timeZone from UTC at the given instant, in ms (positive = ahead)
+const zoneOffsetMs = (instantMs, timeZone) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone, hourCycle: 'h23',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric',
+  }).formatToParts(new Date(instantMs));
+  const p = Object.fromEntries(parts.map(({ type, value }) => [type, Number(value)]));
+  const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  return asUtc - Math.floor(instantMs / 1000) * 1000;
+};
+
+// Re-read a floating time's wall-clock digits as a time in timeZone
+const floatingToUtc = (date, timeZone) => {
+  // node-ical built this Date from the digits in the server's zone, so the
+  // local getters hand the original digits back
+  const wall = Date.UTC(
+    date.getFullYear(), date.getMonth(), date.getDate(),
+    date.getHours(), date.getMinutes(), date.getSeconds()
+  );
+  const guess = wall - zoneOffsetMs(wall, timeZone);
+  // Second pass settles times near a daylight-saving change
+  return new Date(wall - zoneOffsetMs(guess, timeZone));
+};
+
+// Parse ICS text into normalized shift objects.
+const parseIcsText = (text) => {
   // An expired/broken link often returns an HTML login page with HTTP 200 —
   // it parses to zero events, which must not be mistaken for an empty roster
   if (!text.includes('BEGIN:VCALENDAR')) {
     throw new Error('The link did not return a calendar feed — it may have expired, try generating a new one in Humanforce');
   }
+
+  const feedTimeZone = getFeedTimeZone(text);
+  // node-ical tags times that carried a Z or TZID with .tz; floating ones have none
+  const toInstant = (value) =>
+    feedTimeZone && !value.tz ? floatingToUtc(new Date(value), feedTimeZone) : new Date(value);
 
   let data;
   try {
@@ -134,9 +179,9 @@ const fetchAndParseIcs = async (url) => {
     if (ev.datetype === 'date') continue;
     if ((ev.status || '').toString().toUpperCase() === 'CANCELLED') continue;
 
-    const start = new Date(ev.start);
+    const start = toInstant(ev.start);
     // Feeds occasionally omit DTEND; treat as zero-length rather than dropping
-    const end = ev.end ? new Date(ev.end) : new Date(ev.start);
+    const end = ev.end ? toInstant(ev.end) : toInstant(ev.start);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
 
     shifts.push({
@@ -153,6 +198,9 @@ const fetchAndParseIcs = async (url) => {
   }
   return shifts;
 };
+
+// Fetch an ICS feed and return normalized shift objects.
+const fetchAndParseIcs = async (url) => parseIcsText(await fetchFeedText(url));
 
 // One sync per user at a time — "Sync now" clicks and the scheduler can
 // otherwise interleave and race on config.save()/upserts
@@ -242,4 +290,4 @@ const syncAllUsers = async () => {
   return results;
 };
 
-module.exports = { normalizeIcsUrl, fetchAndParseIcs, syncUser, syncAllUsers };
+module.exports = { normalizeIcsUrl, parseIcsText, fetchAndParseIcs, syncUser, syncAllUsers };
