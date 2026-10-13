@@ -12,6 +12,7 @@ const timeLogRoutes = require('./routes/timeLogRoutes');
 const payslipRoutes = require('./routes/payslipRoutes');
 const syncRoutes = require('./routes/syncRoutes');
 const { startSyncScheduler } = require('./jobs/syncScheduler');
+const { startKeepAlive } = require('./jobs/keepAlive');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,11 +66,19 @@ app.get('/', (req, res) => {
   res.send('Timesheet Tracker API is running securely!');
 });
 
+// Health check — target of the keep-alive ping, no DB access
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Global error handler — must be registered after all routes
 app.use(errorHandler);
 
 // Background Humanforce ICS sync (every 15 min)
 startSyncScheduler();
+
+// Self-ping so Render's free tier doesn't spin the service down (no-op locally)
+startKeepAlive();
 
 // Start Server
 app.listen(PORT, () => {
