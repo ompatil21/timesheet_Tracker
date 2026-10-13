@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import {
+  ScrapbookDefs, Scrap, Tape, Flower, Star, Scribble, Arrow, Splat, Heart, Smiley, CheckBox, Rule,
+} from '@/components/scrapbook';
 
 function useClock() {
   const [time, setTime] = useState('');
@@ -19,13 +22,20 @@ const MARQUEE_ITEMS = [
   'Time logging', 'Payslip verification', 'Client tracking',
   'Break time', 'Weekly reports', 'Invoice generation',
   'Hourly rates', 'Dispute evidence', 'Earnings forecast',
-  'Start / finish times', 'Export to CSV', 'Multi-client',
+  'Start and finish times', 'Export to CSV', 'Multiple clients',
 ];
 
 const LOG_ENTRIES = [
   { client: 'Acme Corp', task: 'UI redesign', duration: '3h 20m', live: true },
   { client: 'Studio Seven', task: 'API integration', duration: '1h 45m', live: false },
   { client: 'Freelance Blog', task: 'Content review', duration: '0h 55m', live: false },
+];
+
+const TODO = [
+  { text: 'Log Monday’s shift', done: true },
+  { text: 'Upload payslip', done: true },
+  { text: 'Check the hours', done: true },
+  { text: 'Ask about the $42', done: false },
 ];
 
 const FORECAST_BARS = [
@@ -40,270 +50,230 @@ const FORECAST_BARS = [
 
 const STEPS = [
   {
-    n: '01',
+    n: '1',
     title: 'Log your hours',
     body: 'Start a timer or log manually. Add the client, task, and rate. Takes under 10 seconds.',
+    rotate: '-rotate-2',
+    paper: 'white',
   },
   {
-    n: '02',
+    n: '2',
     title: 'Verify your payslip',
     body: 'Upload your payslip and compare it against your tracked hours. Discrepancies surface automatically.',
+    rotate: 'rotate-1',
+    paper: 'kraft',
   },
   {
-    n: '03',
+    n: '3',
     title: "Know what you're owed",
-    body: "See a running total of earnings, export reports, and go into every payment conversation with facts.",
+    body: 'See a running total of earnings, export reports, and go into every payment conversation with facts.',
+    rotate: '-rotate-1',
+    paper: 'white',
   },
-];
+] as const;
+
+const ease = [0.16, 1, 0.3, 1] as const;
 
 export default function Home() {
   const time = useClock();
 
   return (
-    <main className="min-h-screen bg-[#0A0A0A] text-[#F5F2EB] overflow-x-hidden">
+    <main className="sb-page min-h-screen overflow-x-hidden font-type text-ink selection:bg-blush selection:text-ink">
+      <ScrapbookDefs />
 
       {/* ── Header ── */}
-      <header className="border-b border-[#1E1E1E]">
-        <div className="mx-auto max-w-7xl px-6 py-5 flex items-center justify-between">
-          <span className="font-display text-xl font-black uppercase italic tracking-tighter text-[#F5F2EB]">
-            Time<span className="text-volt">Tracker</span>
-          </span>
-          <nav className="flex items-center gap-6">
-            <a
-              href="/login"
-              className="text-sm text-[#5A5A5A] hover:text-[#F5F2EB] transition-colors duration-200"
-            >
+      <header className="mx-auto max-w-6xl px-6 pt-6">
+        <div className="flex items-center justify-between pb-4">
+          <a href="/" className="font-note text-2xl leading-[1.05] tracking-wide">
+            Time<br /><span className="pl-3">Tracker</span>
+          </a>
+          <nav className="flex items-center gap-6 font-note text-lg">
+            <a href="/login" className="px-2 py-3 hover:text-stamp transition-colors duration-200">
               Log in
             </a>
-            <a
-              href="/register"
-              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold rounded-md bg-volt text-[#0A0A0A] hover:brightness-110 transition-all duration-200"
-            >
-              Start free <ArrowRight className="h-3.5 w-3.5" />
+            <a href="/register" className="group">
+              <Scrap paper="ink" edge="rough" className="flex items-center gap-2 px-5 py-2 text-paper tracking-wider uppercase text-base">
+                Start free <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              </Scrap>
             </a>
           </nav>
         </div>
+        <Rule className="h-2 w-full text-ink" />
       </header>
 
-      {/* ── Marquee strip ── */}
-      <div className="bg-[#0D0D0D] border-b border-[#1E1E1E] overflow-hidden py-3">
+      {/* ── Hero collage ── */}
+      <section className="relative mx-auto max-w-6xl px-6 pt-14 pb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-12 items-center">
+
+          <Flower className="hidden lg:block lg:col-span-1 h-72 text-ink justify-self-center" />
+
+          {/* Kraft scrap — headline */}
+          <motion.div
+            initial={{ opacity: 0, y: 24, rotate: -4 }}
+            animate={{ opacity: 1, y: 0, rotate: -1 }}
+            transition={{ duration: 0.7, ease }}
+            className="relative sm:col-span-2 lg:col-span-5"
+          >
+            <Tape className="-top-3 left-1/4 -rotate-2 !w-40" />
+            <Scrap paper="kraft" className="px-8 sm:px-10 pt-14 pb-12">
+              <h1 className="font-hand font-bold text-[clamp(3.25rem,7vw,4.75rem)] leading-[0.95]">
+                Your time,<br />your invoice.
+              </h1>
+              <Scribble className="mt-2 h-4 w-64 max-w-full text-ink" />
+
+              <p className="mt-7 max-w-sm text-[15px] leading-relaxed text-ink/80">
+                Stop guessing what you&apos;re owed. Log hours as you work,
+                verify your payslip against what you actually tracked,
+                and spot discrepancies before they cost you.
+              </p>
+
+              <div className="mt-8 flex flex-wrap items-center gap-6 font-note text-lg uppercase tracking-wider">
+                <motion.a whileHover={{ rotate: -1.5, scale: 1.03 }} whileTap={{ scale: 0.97 }} href="/register" className="group">
+                  <Scrap paper="ink" edge="rough" className="flex items-center gap-3 px-6 py-2.5 text-paper">
+                    Start tracking
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </Scrap>
+                </motion.a>
+                <a href="/login" className="sb-link py-2 hover:text-stamp hover:border-stamp transition-colors duration-200">
+                  Sign in
+                </a>
+              </div>
+            </Scrap>
+          </motion.div>
+
+          {/* Polaroid — live clock */}
+          <motion.div
+            initial={{ opacity: 0, y: 24, rotate: 6 }}
+            animate={{ opacity: 1, y: 0, rotate: 2 }}
+            transition={{ duration: 0.7, delay: 0.15, ease }}
+            className="relative lg:col-span-3 justify-self-center w-full max-w-[17rem]"
+          >
+            <Smiley className="absolute -left-9 -top-8 z-10 h-20 w-20 -rotate-12 drop-shadow-sm" />
+            <Tape className="-top-4 left-1/2 -translate-x-1/3 rotate-3" />
+            <div className="sb-polaroid">
+              <div className="bg-[#2B2823] px-4 py-9 text-center text-paper">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-paper/50">Time today</p>
+                <p className="mt-3 text-[2.1rem] font-bold leading-none tabular-nums">
+                  {time || '00:00:00'}
+                </p>
+                <p className="mt-4 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-tape">
+                  <span className="h-1.5 w-1.5 rounded-full bg-tape animate-pulse" />
+                  Tracking
+                </p>
+              </div>
+              <p className="pt-2 pb-1 text-center font-hand text-2xl">today&apos;s shift</p>
+            </div>
+            <Arrow className="hidden lg:block absolute -bottom-14 right-0 h-20 w-16 text-ink" />
+          </motion.div>
+
+          {/* Lined note — checklist */}
+          <motion.div
+            initial={{ opacity: 0, y: 24, rotate: 8 }}
+            animate={{ opacity: 1, y: 0, rotate: 4 }}
+            transition={{ duration: 0.7, delay: 0.3, ease }}
+            className="relative lg:col-span-3 justify-self-center w-full max-w-[15rem]"
+          >
+            <Star className="absolute -top-16 right-6 h-12 w-12 text-ink" />
+            <div className="sb-lined px-6 pt-4 pb-6 shadow-[2px_4px_10px_rgba(60,40,20,0.18)] font-note text-xl">
+              <p className="sb-link inline-block tracking-widest">THIS WEEK:</p>
+              <ul>
+                {TODO.map(item => (
+                  <li key={item.text} className="flex items-center gap-2">
+                    <CheckBox checked={item.done} className="h-6 w-6 shrink-0 overflow-visible" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+              <Heart className="ml-auto mt-1 h-7 w-7" />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Graph-paper note — weekly total */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.45, ease }}
+          className="relative mx-auto mt-10 w-fit lg:absolute lg:bottom-6 lg:left-[46%] lg:mt-0 -rotate-2"
+        >
+          <div className="sb-grid px-6 py-4 shadow-[2px_3px_8px_rgba(60,40,20,0.18)] font-note text-lg leading-snug">
+            <p>Est. this week: <span className="font-type font-bold">$1,247.50</span></p>
+            <p>Logged so far: <span className="font-type font-bold">28.5h</span></p>
+          </div>
+          <Splat className="absolute -right-12 -top-6 h-12 w-12 text-ink" />
+        </motion.div>
+      </section>
+
+      {/* ── Washi-tape marquee ── */}
+      <div className="relative -mx-4 -rotate-1 overflow-hidden bg-tape/80 py-2.5 shadow-[0_2px_6px_rgba(60,40,20,0.15)]">
         <div className="flex animate-marquee whitespace-nowrap will-change-transform">
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-4 mx-8 text-[11px] font-bold uppercase tracking-widest text-volt"
-            >
+            <span key={i} className="mx-6 inline-flex items-center gap-12 font-note text-lg tracking-wide">
               {item}
-              <span className="text-[#2A2A2A]">◆</span>
+              <span className="text-ink/40">✶</span>
             </span>
           ))}
         </div>
       </div>
 
-      {/* ── Hero ── */}
-      <section className="mx-auto max-w-7xl px-6 pt-20 pb-28 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-
-        {/* Left — copy */}
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-8"
-        >
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A] border border-[#1E1E1E] px-3.5 py-1.5 rounded-full">
-            <span className="h-1.5 w-1.5 rounded-full inline-block bg-volt" />
-            For freelancers
-          </div>
-
-          <h1 className="font-heading text-[clamp(3rem,8vw,5.5rem)] font-bold leading-[0.93] tracking-tight text-[#F5F2EB]">
-            Your time,<br />
-            <span className="text-volt">your invoice.</span>
-          </h1>
-
-          <p className="text-lg leading-relaxed max-w-md text-[#6B6B6B]">
-            Stop guessing what you&apos;re owed. Log hours as you work,
-            verify your payslip against what you actually tracked,
-            and spot discrepancies before they cost you.
-          </p>
-
-          <div className="flex flex-wrap gap-3 pt-1">
-            <motion.a
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              href="/register"
-              className="flex items-center gap-2 px-7 py-3.5 font-bold rounded-md bg-volt text-[#0A0A0A] hover:brightness-110 transition-all duration-200 group"
-            >
-              Start tracking free
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </motion.a>
-            <a
-              href="/login"
-              className="flex items-center gap-2 px-7 py-3.5 font-bold rounded-md border border-[#1E1E1E] text-[#F5F2EB] hover:border-[#2E2E2E] transition-colors duration-200"
-            >
-              Sign in
-            </a>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-6 pt-1">
-            {['No credit card', 'Cancel any time', 'Export your data'].map(item => (
-              <div key={item} className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
-                <Check className="h-3.5 w-3.5 text-volt" />
-                {item}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Right — live clock widget */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-          className="relative"
-        >
-          {/* subtle lime rim glow */}
-          <div className="absolute -inset-px rounded-2xl pointer-events-none bg-gradient-to-br from-volt/[12%] to-transparent" />
-
-          <div className="relative rounded-2xl p-8 space-y-6 bg-[#111111] border border-[#1E1E1E]">
-
-            {/* header row */}
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                Active session
-              </span>
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-volt">
-                <span className="h-1.5 w-1.5 rounded-full inline-block animate-pulse bg-volt" />
-                Tracking
-              </span>
-            </div>
-
-            {/* live clock */}
-            <div>
-              <p className="font-mono text-[clamp(3rem,9vw,4.5rem)] font-black leading-none tracking-tighter tabular-nums text-[#F5F2EB]">
-                {time || '00:00:00'}
-              </p>
-              <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                Time today
-              </p>
-            </div>
-
-            <div className="h-px bg-[#1E1E1E]" />
-
-            {/* log entries */}
-            <div className="space-y-1">
-              {LOG_ENTRIES.map((entry, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between py-2.5 ${i < LOG_ENTRIES.length - 1 ? 'border-b border-[#181818]' : ''}`}
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-[#F5F2EB]">{entry.client}</p>
-                    <p className="text-xs text-[#5A5A5A]">{entry.task}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-mono font-bold text-[#F5F2EB]">{entry.duration}</p>
-                    {entry.live && (
-                      <span className="text-[10px] font-black uppercase tracking-widest text-volt">
-                        live
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* earnings row */}
-            <div className="flex items-center justify-between rounded-xl px-5 py-4 bg-[#0D0D0D] border border-[#1E1E1E]">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                  Est. this week
-                </p>
-                <p className="mt-1 text-2xl font-black tabular-nums font-heading text-volt">
-                  $1,247.50
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                  Logged
-                </p>
-                <p className="mt-1 text-2xl font-black tabular-nums font-heading text-[#F5F2EB]">
-                  28.5h
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* ── How it works ── */}
-      <section className="border-t border-[#1E1E1E] bg-[#0D0D0D]">
-        <div className="mx-auto max-w-7xl px-6 py-20">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-14 text-[#5A5A5A]">
-            How it works
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {STEPS.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                className="border border-[#1E1E1E] rounded-xl p-8 hover:bg-[#111111] transition-colors duration-200 cursor-default"
-              >
-                <span className="text-xs font-black tracking-widest text-volt">
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <h2 className="font-hand font-bold text-5xl">How it works</h2>
+        <Scribble className="mt-1 h-3 w-44 text-ink" />
+
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-10">
+          {STEPS.map((step, i) => (
+            <motion.div
+              key={step.n}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1, ease }}
+              className={`relative ${step.rotate}`}
+            >
+              <Tape className="-top-3 left-1/2 -translate-x-1/2 rotate-1 !w-24" />
+              <Scrap paper={step.paper} className="h-full px-7 pt-10 pb-9">
+                <span className="sb-sketch inline-flex h-11 w-11 items-center justify-center font-hand text-3xl font-bold">
                   {step.n}
                 </span>
-                <h3 className="mt-5 text-xl font-bold font-heading text-[#F5F2EB]">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#5A5A5A]">
-                  {step.body}
-                </p>
-              </motion.div>
-            ))}
-          </div>
+                <h3 className="mt-4 font-hand text-4xl font-bold leading-none">{step.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink/75">{step.body}</p>
+              </Scrap>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* ── Features bento ── */}
-      <section className="mx-auto max-w-7xl px-6 py-24">
-        <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-[#5A5A5A]">
-          Features
-        </p>
-        <h2 className="font-heading text-[clamp(2rem,5vw,3.25rem)] font-bold leading-tight mb-12 text-[#F5F2EB]">
+      {/* ── Features ── */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <Rule className="mb-16 h-2 w-full text-ink" />
+        <p className="font-note text-lg uppercase tracking-[0.2em] text-ink-soft">Features</p>
+        <h2 className="mt-1 font-hand font-bold text-[clamp(2.75rem,6vw,4rem)] leading-[0.95]">
           Built around<br />how you actually work.
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
 
           {/* Wide — payslip */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="col-span-1 sm:col-span-2 bg-[#111111] border border-[#1E1E1E] rounded-xl p-8 flex flex-col justify-between min-h-[220px] hover:border-[#2A2A2A] transition-colors duration-200"
+            transition={{ duration: 0.5, ease }}
+            className="relative sm:col-span-2 -rotate-1"
           >
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-volt">
-                Payslip verification
+            <Tape className="-top-3 left-10 -rotate-3" />
+            <Scrap paper="kraft" className="h-full px-8 pt-11 pb-9">
+              <p className="font-note uppercase tracking-[0.2em] text-ink/70">Payslip verification</p>
+              <h3 className="mt-2 font-hand text-5xl font-bold leading-none">Upload a payslip. See the truth.</h3>
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/80">
+                Compare your actual tracked hours against what your employer reported, line by line. No more surprises at the end of the month.
               </p>
-              <h3 className="text-2xl font-bold font-heading text-[#F5F2EB]">
-                Upload a payslip. See the truth.
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed max-w-sm text-[#5A5A5A]">
-                Compare your actual tracked hours against what your employer reported — line by line. No more end-of-month surprises.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded text-[11px] font-bold bg-volt/10 border border-volt/20 text-volt">
-                PDF / CSV
-              </span>
-              <span className="px-2.5 py-1 rounded text-[11px] font-bold bg-[#1A1A1A] border border-[#252525] text-[#5A5A5A]">
-                Auto-matched
-              </span>
-            </div>
+              <div className="mt-6 flex items-center gap-3 font-note">
+                <span className="sb-sketch px-3 py-0.5">PDF / CSV</span>
+                <span className="sb-sketch px-3 py-0.5 -rotate-2 border-stamp text-stamp">Auto matched</span>
+              </div>
+            </Scrap>
           </motion.div>
 
           {/* Clients */}
@@ -311,37 +281,42 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-[#111111] border border-[#1E1E1E] rounded-xl p-8 hover:border-[#2A2A2A] transition-colors duration-200"
+            transition={{ duration: 0.5, delay: 0.08, ease }}
+            className="rotate-2"
           >
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-volt">
-              Clients
-            </p>
-            <h3 className="text-xl font-bold font-heading text-[#F5F2EB]">
-              Track by client, not just by hour.
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-[#5A5A5A]">
-              Break down earnings per project and know your most valuable relationships at a glance.
-            </p>
+            <div className="sb-lined h-full px-7 pt-4 pb-8 shadow-[2px_4px_10px_rgba(60,40,20,0.18)]">
+              <p className="font-note uppercase tracking-[0.2em] text-ink-soft">Clients</p>
+              <h3 className="font-hand text-[2rem] font-bold leading-8">Track by client, not just by hour.</h3>
+              <p className="font-note text-lg text-ink/80">
+                Break down earnings per project and know your most valuable relationships at a glance.
+              </p>
+            </div>
           </motion.div>
 
-          {/* Reports */}
+          {/* Reports — recent log */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-[#111111] border border-[#1E1E1E] rounded-xl p-8 hover:border-[#2A2A2A] transition-colors duration-200"
+            transition={{ duration: 0.5, delay: 0.1, ease }}
+            className="relative -rotate-2"
           >
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-volt">
-              Reports
-            </p>
-            <h3 className="text-xl font-bold font-heading text-[#F5F2EB]">
-              Weekly & monthly breakdowns.
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-[#5A5A5A]">
-              Export to CSV or PDF. Take your data anywhere — your records stay yours.
-            </p>
+            <Tape className="-top-3 right-8 rotate-6 !w-24" />
+            <Scrap paper="white" edge="rough" className="h-full px-7 pt-9 pb-7">
+              <p className="font-note uppercase tracking-[0.2em] text-ink-soft">Reports</p>
+              <h3 className="mt-1 font-hand text-4xl font-bold leading-none">Weekly &amp; monthly breakdowns.</h3>
+              <ul className="mt-5 text-sm">
+                {LOG_ENTRIES.map(entry => (
+                  <li key={entry.client} className="flex items-baseline justify-between gap-3 border-b border-dashed border-ink/25 py-2">
+                    <span>
+                      {entry.client}
+                      {entry.live && <span className="ml-2 font-note text-stamp">live</span>}
+                    </span>
+                    <span className="font-bold tabular-nums">{entry.duration}</span>
+                  </li>
+                ))}
+              </ul>
+            </Scrap>
           </motion.div>
 
           {/* Earnings forecast — wide + mini chart */}
@@ -349,74 +324,71 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="col-span-1 sm:col-span-2 bg-[#0D0D0D] border border-[#1E1E1E] rounded-xl p-8 hover:border-[#2A2A2A] transition-colors duration-200"
+            transition={{ duration: 0.5, delay: 0.12, ease }}
+            className="sm:col-span-2 rotate-1"
           >
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-volt">
-              Earnings forecast
-            </p>
-            <h3 className="text-xl font-bold font-heading text-[#F5F2EB]">
-              See where the month is headed.
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed max-w-md text-[#5A5A5A]">
-              Based on your current pace and contracted hours, we project your month-end total so you&apos;re never caught short.
-            </p>
+            <div className="sb-grid h-full px-8 py-8 shadow-[2px_4px_10px_rgba(60,40,20,0.18)]">
+              <p className="font-note uppercase tracking-[0.2em] text-ink-soft">Earnings forecast</p>
+              <h3 className="mt-1 font-hand text-4xl font-bold leading-none">See where the month is headed.</h3>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink/80">
+                Based on your current pace and contracted hours, we project your total for the month so you&apos;re never caught short.
+              </p>
 
-            {/* bar chart — heights are dynamic, inline style is unavoidable here */}
-            <div className="mt-6 flex items-end gap-1.5 h-16">
-              {FORECAST_BARS.map((bar, i) => (
-                <div
-                  key={i}
-                  className={`flex-1 rounded-sm ${bar.filled ? 'bg-volt' : 'bg-volt/25'}`}
-                  style={{ height: `${bar.h}%` }}
-                />
-              ))}
-              <div className="self-center ml-1 text-xs font-black text-volt">+12%</div>
-            </div>
-            <div className="mt-1.5 flex gap-1.5 text-[9px] font-bold uppercase tracking-widest text-[#3A3A3A]">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                <div key={d} className="flex-1 text-center">{d}</div>
-              ))}
+              {/* bar chart — heights are dynamic, inline style is unavoidable here */}
+              <div className="mt-6 flex items-end gap-2 h-20 border-b-2 border-ink">
+                {FORECAST_BARS.map((bar, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 border-2 border-b-0 border-ink ${bar.filled ? 'bg-ink' : 'bg-transparent border-dashed'}`}
+                    style={{ height: `${bar.h}%` }}
+                  />
+                ))}
+                <div className="self-center ml-2 font-hand text-3xl font-bold text-stamp -rotate-6">+12%</div>
+              </div>
+              <div className="mt-1 flex gap-2 pr-[4.25rem] font-note text-sm text-ink-soft">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+                  <div key={d} className="flex-1 text-center">{d}</div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ── CTA ── */}
-      <section className="border-t border-[#1E1E1E]">
-        <div className="mx-auto max-w-7xl px-6 py-24 flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
-          <div>
-            <h2 className="font-heading text-[clamp(2.25rem,5vw,3.5rem)] font-bold leading-tight text-[#F5F2EB]">
-              Start tracking.<br />
-              <span className="text-volt">Stop guessing.</span>
+      <section className="mx-auto max-w-4xl px-6 pb-24">
+        <div className="relative rotate-1">
+          <Tape className="-top-3 left-12 -rotate-6" />
+          <Tape className="-top-3 right-12 rotate-3" />
+          <Scrap paper="kraft" className="px-8 sm:px-14 py-14 text-center">
+            <h2 className="font-hand font-bold text-[clamp(3rem,7vw,4.5rem)] leading-[0.95]">
+              Start tracking.<br />Stop guessing.
             </h2>
-            <p className="mt-4 text-base leading-relaxed max-w-sm text-[#5A5A5A]">
-              Free to start. No credit card. Your data is yours — export it any time.
+            <Scribble className="mx-auto mt-2 h-4 w-72 max-w-full text-ink" />
+            <p className="mx-auto mt-6 max-w-sm text-[15px] leading-relaxed text-ink/80">
+              Free to start. No credit card. Your data is yours. Export it any time.
             </p>
-          </div>
-          <div className="shrink-0">
             <motion.a
-              whileHover={{ scale: 1.04 }}
+              whileHover={{ rotate: -1.5, scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               href="/register"
-              className="flex items-center justify-center gap-2 px-9 py-4 font-black text-lg rounded-md bg-volt text-[#0A0A0A] hover:brightness-110 transition-all duration-200 group"
+              className="group mt-8 inline-block font-note text-xl uppercase tracking-wider"
             >
-              Get started free
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+              <Scrap paper="ink" edge="rough" className="flex items-center gap-3 px-8 py-3 text-paper">
+                Get started free
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+              </Scrap>
             </motion.a>
-          </div>
+          </Scrap>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-[#1E1E1E] bg-[#0A0A0A]">
-        <div className="mx-auto max-w-7xl px-6 py-8 flex items-center justify-between">
-          <span className="font-display text-sm font-black uppercase italic tracking-tighter text-[#2A2A2A]">
-            TimeTracker
-          </span>
-          <p className="text-xs text-[#3A3A3A]">
-            © 2026. Your time, your terms.
-          </p>
+      <footer className="mx-auto max-w-6xl px-6 pb-8">
+        <Rule className="h-2 w-full text-ink" />
+        <div className="flex items-center justify-between pt-5 font-note text-lg text-ink-soft">
+          <span>Time Tracker</span>
+          <p>© 2026. Your time, your terms.</p>
         </div>
       </footer>
     </main>

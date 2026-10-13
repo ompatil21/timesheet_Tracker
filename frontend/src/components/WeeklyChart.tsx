@@ -10,8 +10,11 @@ interface WeeklyChartProps {
   todayIndex?: number; // 0=Mon … 6=Sun, -1=no highlight
 }
 
+const INK = '#1F1B16';
+const INK_SOFT = '#5B5348';
+
 function fmtHours(h: number) {
-  if (h === 0) return '—';
+  if (h === 0) return '0h';
   const hrs  = Math.floor(h);
   const mins = Math.round((h - hrs) * 60);
   if (hrs === 0) return `${mins}m`;
@@ -25,19 +28,19 @@ function CustomTooltip({ active, payload, label }: any) {
   const revenue = payload[0]?.payload?.revenue ?? 0;
 
   return (
-    <div className="bg-[#111111] border border-[#1E1E1E] rounded-xl p-4 shadow-2xl min-w-[148px]">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A5A] mb-3">{label}</p>
-      <div className="space-y-3">
+    <div className="sb-grid border border-ink/20 p-4 shadow-lg min-w-[148px] -rotate-1">
+      <p className="font-note text-base text-ink-soft mb-2">{label}</p>
+      <div className="space-y-2">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A5A]">Hours</p>
-          <p className="font-heading text-xl font-black text-[#F5F2EB] tabular-nums mt-0.5">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Hours</p>
+          <p className="text-xl font-bold text-ink tabular-nums">
             {fmtHours(hours)}
           </p>
         </div>
         {revenue > 0 && (
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A5A]">Earned</p>
-            <p className="font-heading text-xl font-black text-volt tabular-nums mt-0.5">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-ink-soft">Earned</p>
+            <p className="text-xl font-bold text-moss tabular-nums">
               ${revenue.toFixed(2)}
             </p>
           </div>
@@ -48,43 +51,41 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function WeeklyChart({ data, todayIndex = -1 }: WeeklyChartProps) {
-  const maxHours = Math.max(...data.map(d => d.hours), 1);
-
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 6, right: 4, left: -28, bottom: 0 }} barCategoryGap="28%">
           <CartesianGrid
-            strokeDasharray="0"
-            stroke="#1E1E1E"
+            strokeDasharray="2 5"
+            stroke="rgba(31, 27, 22, 0.2)"
             vertical={false}
           />
           <XAxis
             dataKey="day"
-            axisLine={false}
+            axisLine={{ stroke: INK, strokeWidth: 1.5 }}
             tickLine={false}
-            tick={{ fill: '#5A5A5A', fontSize: 10, fontWeight: 700, letterSpacing: 1 }}
+            tick={{ fill: INK_SOFT, fontSize: 11, fontWeight: 700 }}
             dy={8}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#5A5A5A', fontSize: 10, fontWeight: 700 }}
+            tick={{ fill: INK_SOFT, fontSize: 11, fontWeight: 700 }}
             tickFormatter={(v) => v === 0 ? '' : `${v}h`}
             width={36}
           />
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ fill: 'rgba(200, 241, 53, 0.04)', radius: 6 } as any}
+            cursor={{ fill: 'rgba(31, 27, 22, 0.05)' } as any}
           />
-          <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={48} animationBegin={0} animationDuration={600} animationEasing="ease-out">
+          <Bar dataKey="hours" radius={[2, 2, 0, 0]} maxBarSize={48} stroke={INK} strokeWidth={1.5} animationBegin={0} animationDuration={600} animationEasing="ease-out">
             {data.map((entry, i) => {
               const isToday   = i === todayIndex;
               const hasHours  = entry.hours > 0;
               let fill: string;
-              if (!hasHours)      fill = '#1E1E1E';
-              else if (isToday)   fill = '#C8F135';
-              else                fill = 'rgba(200, 241, 53, 0.55)';
+              if (!hasHours)      fill = 'transparent';
+              else if (isToday)   fill = '#B4472E';
+              else                fill = INK;
               return <Cell key={`cell-${i}`} fill={fill} />;
             })}
           </Bar>

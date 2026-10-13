@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
+import { Caveat, Patrick_Hand, Courier_Prime } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
-const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
+const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
+const patrickHand = Patrick_Hand({ subsets: ["latin"], weight: "400", variable: "--font-patrick-hand" });
+const courierPrime = Courier_Prime({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-courier-prime" });
 
 export const metadata: Metadata = {
   title: "Timesheet Tracker | Premium",
@@ -19,13 +18,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${orbitron.variable} ${spaceGrotesk.variable} font-sans bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen selection:bg-racing-red selection:text-white transition-colors duration-300`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+    <html lang="en">
+      <body className={`${caveat.variable} ${patrickHand.variable} ${courierPrime.variable} font-sans sb-page text-ink min-h-screen selection:bg-blush selection:text-ink`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

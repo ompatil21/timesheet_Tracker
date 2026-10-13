@@ -18,36 +18,106 @@
   .clip-slant-btn {
     clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
   }
-  .bg-carbon {
-    background-image: linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.03) 75%, rgba(0,0,0,0.03)), linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.03) 75%, rgba(0,0,0,0.03));
-    background-color: #fafafa;
-    background-size: 8px 8px;
-    background-position: 0 0, 4px 4px;
-  }
-}
-
-.dark .bg-carbon {
-  background-image: linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111), linear-gradient(45deg, #111 25%, transparent 25%, transparent 75%, #111 75%, #111);
-  background-color: #1a1a1a;
 }
 
 @layer base {
   input, select, textarea {
-    background-color: #ffffff;
-    border-color: #e4e4e7;
-    color: #18181b;
+    background-color: #FAF8F2;
+    border-color: #CBBE9F;
+    color: #1F1B16;
     transition: background-color 0.2s ease-out, border-color 0.2s ease-out, color 0.2s ease-out;
   }
 
-  .dark input, .dark select, .dark textarea {
-    background-color: #18181b;
-    border-color: #3f3f46;
-    color: white;
+  input:focus, select:focus, textarea:focus {
+    border-color: #1F1B16;
+    box-shadow: 0 0 0 3px rgba(31, 27, 22, 0.08);
+    outline: none;
+  }
+}
+
+/* ── Scrapbook theme ─────────────────────────────────────────────────────── */
+@layer components {
+  /* Cream paper page with a faint grain */
+  .sb-page {
+    background-color: #F1EADB;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    color: #1F1B16;
   }
 
-  input:focus, select:focus, textarea:focus {
-    border-color: #C8F135;
-    box-shadow: 0 0 0 3px rgba(200, 241, 53, 0.08);
-    outline: none;
+  /* A scrap of paper. The colour sits on ::before so the torn-edge filter
+     roughens the paper without distorting the text on top of it.
+     Needs <ScrapbookDefs /> on the page for the #sb-torn / #sb-rough filters. */
+  .sb-scrap,
+  .sb-rough {
+    position: relative;
+    isolation: isolate;
+  }
+  .sb-scrap::before,
+  .sb-rough::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--scrap-bg, #CFA77F);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .15 0 0 0 0 .1 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .sb-scrap::before {
+    filter: url(#sb-torn) drop-shadow(2px 5px 6px rgba(60, 40, 20, 0.22));
+  }
+  .sb-rough::before {
+    filter: url(#sb-rough) drop-shadow(1px 2px 2px rgba(60, 40, 20, 0.25));
+  }
+
+  /* Strip of masking tape — position it with absolute + rotate utilities */
+  .sb-tape {
+    position: absolute;
+    height: 1.9rem;
+    width: 7.5rem;
+    background: linear-gradient(180deg, rgba(240, 228, 196, 0.9), rgba(226, 210, 170, 0.82));
+    box-shadow: 0 1px 3px rgba(60, 40, 20, 0.18);
+    clip-path: polygon(2% 6%, 12% 0, 30% 5%, 55% 0, 80% 6%, 98% 0, 100% 35%, 97% 60%, 100% 100%, 75% 94%, 50% 100%, 22% 95%, 0 100%, 3% 62%, 0 30%);
+    z-index: 2;
+  }
+
+  /* Ruled notebook paper */
+  .sb-lined {
+    background-color: #F8F6F0;
+    background-image: repeating-linear-gradient(transparent 0 31px, #B9CBE0 31px 32px);
+    line-height: 32px;
+  }
+
+  /* Graph paper */
+  .sb-grid {
+    background-color: #D8DACB;
+    background-image:
+      linear-gradient(rgba(31, 27, 22, 0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31, 27, 22, 0.09) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+
+  /* Instant-photo frame */
+  .sb-polaroid {
+    background: #FAF8F2;
+    padding: 0.75rem 0.75rem 0.5rem;
+    box-shadow: 3px 6px 14px rgba(60, 40, 20, 0.25), 0 0 0 1px rgba(60, 40, 20, 0.06);
+  }
+
+  /* Wobbly pen outline */
+  .sb-sketch {
+    border: 2px solid #1F1B16;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  }
+
+  .sb-link {
+    border-bottom: 2px solid #1F1B16;
+    border-radius: 0 0 40% 60% / 0 0 6px 4px;
+    padding-bottom: 1px;
+  }
+
+  /* Plain paper card used across the app pages */
+  .sb-card {
+    background-color: #FAF8F2;
+    border: 1px solid rgba(31, 27, 22, 0.12);
+    box-shadow: 2px 4px 10px rgba(60, 40, 20, 0.16);
   }
 }

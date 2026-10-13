@@ -12,6 +12,7 @@ import WeeklyChart from '@/components/WeeklyChart';
 import RevenueChart from '@/components/RevenueChart';
 import { SyncStatus, SyncStatusBadge } from '@/components/HumanforceSync';
 import { CalendarClock } from 'lucide-react';
+import { Scrap, Tape, Scribble, Smiley } from '@/components/scrapbook';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -176,57 +177,45 @@ export default function Dashboard() {
     return () => { controlsHours.stop(); controlsPay.stop(); };
   }, [stats]);
 
-  if (loading || !user) return <AppPageLoader label="Starting engine" />;
+  if (loading || !user) return <AppPageLoader label="Opening your notebook" />;
+
+  const rangeLabel = timeRange === 'week' ? 'This week' : timeRange === 'lastWeek' ? 'Last week' : 'This month';
+  const ranges = [
+    { id: 'week', label: 'This week' },
+    { id: 'lastWeek', label: 'Last week' },
+    { id: 'month', label: 'This month' },
+  ] as const;
 
   return (
-    <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors overflow-hidden">
+    <div className="min-h-screen sb-page md:pl-64 pb-20 md:pb-0 text-ink overflow-hidden">
       <Sidebar />
       <main className="p-6 md:p-10 max-w-7xl mx-auto relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 flex flex-col sm:flex-row items-start sm:items-end justify-between border-b border-zinc-200 dark:border-zinc-800 pb-6 gap-4 relative z-20"
+          className="mb-10 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 relative z-20"
         >
           <div>
-            <h2 className="text-sm font-bold text-racing-red uppercase tracking-widest mb-1">Active User</h2>
-            <h1 className="text-4xl md:text-5xl font-black font-display uppercase tracking-tight italic">
+            <h2 className="font-note text-xl text-ink-soft">hello again,</h2>
+            <h1 className="font-hand font-bold text-6xl md:text-7xl leading-none">
               {user.name}
             </h1>
+            <Scribble className="mt-1 h-3 w-48 text-ink" />
           </div>
-          <div className="flex flex-col items-end gap-4">
-            <div className="hidden sm:flex items-center justify-end gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-racing-red opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-racing-red"></span>
-              </span>
-              <span className="text-sm font-bold tracking-widest text-zinc-900 dark:text-white uppercase">ONLINE</span>
-            </div>
-            
-            {/* Time Range Toggle */}
-            <div className="flex bg-zinc-200 dark:bg-zinc-800 p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 shadow-sm">
+
+          {/* Time Range Toggle */}
+          <div className="flex items-center gap-2 font-note text-lg">
+            {ranges.map(range => (
               <button
+                key={range.id}
                 type="button"
-                onClick={() => setTimeRange('week')}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'week' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
+                onClick={() => setTimeRange(range.id)}
+                className={`px-3 sm:px-4 py-2.5 sm:py-1 whitespace-nowrap transition-all ${timeRange === range.id ? 'bg-tape text-ink shadow-sm -rotate-2' : 'text-ink-soft hover:text-ink'}`}
               >
-                This Week
+                {range.label}
               </button>
-              <button
-                type="button"
-                onClick={() => setTimeRange('lastWeek')}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'lastWeek' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                Last Week
-              </button>
-              <button
-                type="button"
-                onClick={() => setTimeRange('month')}
-                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${timeRange === 'month' ? 'bg-white dark:bg-zinc-950 text-racing-red shadow-sm border border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                This Month
-              </button>
-            </div>
+            ))}
           </div>
         </motion.div>
 
@@ -236,37 +225,35 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mb-6 relative z-20"
+            className="mb-10 relative z-20"
           >
             <Link
               href="/calendar"
-              className="flex flex-wrap items-center justify-between gap-4 bg-white/60 dark:bg-zinc-900/40 px-6 py-4 rounded-xl border border-white/20 dark:border-zinc-800/50 backdrop-blur-xl shadow-lg hover:border-racing-red/40 transition-colors group"
+              className="sb-grid flex flex-wrap items-center justify-between gap-4 px-6 py-4 shadow-md rotate-[0.4deg] hover:rotate-0 transition-transform group"
             >
               <div className="flex items-center gap-4">
-                <CalendarClock className="w-5 h-5 text-racing-red" />
+                <CalendarClock className="w-5 h-5 text-ink" strokeWidth={1.75} />
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                    {timeRange === 'week' ? 'This week' : timeRange === 'lastWeek' ? 'Last week' : 'This month'}
-                  </span>
-                  <span className="font-display font-black text-lg">
-                    <span className="text-racing-red">{scheduledHours.toFixed(1)}</span>
-                    <span className="text-xs text-zinc-500 uppercase mx-1">hrs scheduled</span>
-                    <span className="text-zinc-400 mx-1">vs</span>
-                    <span className="text-green-600 dark:text-green-500">{stats.totalHours.toFixed(1)}</span>
-                    <span className="text-xs text-zinc-500 uppercase ml-1">hrs logged</span>
+                  <span className="font-note text-lg text-ink-soft">{rangeLabel}:</span>
+                  <span className="font-bold text-lg">
+                    <span className="text-stamp">{scheduledHours.toFixed(1)}</span>
+                    <span className="text-xs text-ink-soft uppercase mx-1">hrs scheduled</span>
+                    <span className="font-note text-ink-faint mx-1">vs</span>
+                    <span className="text-moss">{stats.totalHours.toFixed(1)}</span>
+                    <span className="text-xs text-ink-soft uppercase ml-1">hrs logged</span>
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {syncStatus.lastSyncStatus === 'failed' ? (
-                  <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">
-                    Humanforce sync failed — check your link
+                  <span className="font-note text-lg text-stamp">
+                    Humanforce sync failed. Check your link.
                   </span>
                 ) : (
                   <SyncStatusBadge status={syncStatus} />
                 )}
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest group-hover:text-racing-red transition-colors">
-                  View calendar →
+                <span className="sb-link font-note text-lg group-hover:text-stamp group-hover:border-stamp transition-colors">
+                  View calendar
                 </span>
               </div>
             </Link>
@@ -274,73 +261,70 @@ export default function Dashboard() {
         )}
 
         {isDataLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-20">
             <MetricCardSkeleton />
             <MetricCardSkeleton />
           </div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20, rotate: -3 }}
+            animate={{ opacity: 1, y: 0, rotate: -1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            whileHover={{ scale: 1.02, rotateX: 2, rotateY: -2, zIndex: 10 }}
-            className="bg-white/60 dark:bg-zinc-900/40 p-8 rounded-xl shadow-2xl border border-white/20 dark:border-zinc-800/50 relative overflow-hidden group backdrop-blur-xl cursor-default transition-all duration-300"
-            style={{ perspective: 1000 }}
+            className="relative"
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-racing-red opacity-10 blur-[80px] group-hover:opacity-20 transition-all"></div>
-            <div className="flex justify-between items-start mb-4 relative z-10">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                {timeRange === 'week' ? "This Week's Time" : timeRange === 'month' ? "This Month's Time" : "Last Month's Time"}
-              </h3>
-              <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">Live</span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-6 relative z-10">
-              <p className="text-7xl font-black font-display text-zinc-900 dark:text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                {displayHours}
-              </p>
-              <span className="text-xl text-zinc-500 font-bold uppercase tracking-widest">HRS</span>
-            </div>
-            
-            <div className="border-t border-zinc-200/50 dark:border-zinc-800/50 pt-4 relative z-10">
-              <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
-                {timeRange === 'week' ? "Weekly Breakdown" : "Monthly Breakdown"}
-              </h4>
-              <WeeklyChart
-                data={chartData}
-                todayIndex={timeRange === 'week' ? (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })() : -1}
-              />
-            </div>
+            <Tape className="-top-3 left-10 -rotate-3" />
+            <Scrap paper="kraft" className="h-full p-8 pt-10">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-note text-xl text-ink/80">{rangeLabel}&apos;s time</h3>
+                <span className="sb-sketch font-note px-3 text-ink">live</span>
+              </div>
+              <div className="flex items-baseline gap-3 mb-6">
+                <p className="font-hand font-bold text-6xl sm:text-7xl leading-none text-ink tabular-nums">
+                  {displayHours}
+                </p>
+                <span className="font-note text-2xl text-ink/70">hrs</span>
+              </div>
+
+              <div className="border-t-2 border-dashed border-ink/30 pt-4">
+                <h4 className="font-note text-lg text-ink/70 mb-2">
+                  {timeRange === 'month' ? 'week by week' : 'day by day'}
+                </h4>
+                <WeeklyChart
+                  data={chartData}
+                  todayIndex={timeRange === 'week' ? (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })() : -1}
+                />
+              </div>
+            </Scrap>
           </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20, rotate: 3 }}
+            animate={{ opacity: 1, y: 0, rotate: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            whileHover={{ scale: 1.02, rotateX: 2, rotateY: 2, zIndex: 10 }}
-            className="bg-white/60 dark:bg-zinc-900/40 p-8 rounded-xl shadow-2xl border border-white/20 dark:border-zinc-800/50 relative overflow-hidden group backdrop-blur-xl cursor-default transition-all duration-300"
-            style={{ perspective: 1000 }}
+            className="relative"
           >
-            <div className="absolute top-0 left-0 w-48 h-48 bg-green-500 opacity-10 blur-[80px] group-hover:opacity-20 transition-all"></div>
-            <div className="flex justify-between items-start mb-4 relative z-10">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                {timeRange === 'week' ? "This Week's Revenue" : timeRange === 'month' ? "This Month's Revenue" : "Last Month's Revenue"}
-              </h3>
-              <span className="bg-green-50 dark:bg-green-950/50 text-green-600 dark:text-green-500 border border-green-200 dark:border-green-900 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Projected</span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-6 relative z-10">
-              <span className="text-4xl text-green-500 dark:text-green-600 font-display font-black">$</span>
-              <p className="text-7xl font-black font-display text-zinc-900 dark:text-white drop-shadow-[0_0_10px_rgba(0,255,0,0.3)] dark:drop-shadow-[0_0_10px_rgba(0,255,0,0.2)]">
-                {displayPay}
-              </p>
-            </div>
-            
-            <div className="border-t border-zinc-200/50 dark:border-zinc-800/50 pt-4 relative z-10">
-              <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">
-                {timeRange === 'week' ? "Weekly Sources" : "Monthly Sources"}
-              </h4>
-              <RevenueChart data={revenueData} />
-            </div>
+            <Smiley className="absolute -right-5 -top-7 z-10 h-16 w-16 rotate-12 drop-shadow-sm" />
+            <Tape className="-top-3 left-1/2 -translate-x-1/2 rotate-2" />
+            <Scrap paper="white" edge="rough" className="h-full p-8 pt-10">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-note text-xl text-ink-soft">{rangeLabel}&apos;s earnings</h3>
+                <span className="sb-sketch font-note px-3 border-moss text-moss">projected</span>
+              </div>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="font-hand font-bold text-4xl sm:text-5xl text-moss">$</span>
+                <p className="font-hand font-bold text-6xl sm:text-7xl leading-none text-ink tabular-nums">
+                  {displayPay}
+                </p>
+              </div>
+
+              <div className="border-t-2 border-dashed border-ink/30 pt-4">
+                <h4 className="font-note text-lg text-ink-soft mb-2">
+                  where it came from
+                </h4>
+                <RevenueChart data={revenueData} />
+              </div>
+            </Scrap>
           </motion.div>
         </div>
         )}

@@ -36,7 +36,7 @@ function AnimatedSphere() {
 
 export default function ThreeScene() {
   return (
-    <div className="absolute inset-0 z-0 opacity-40 dark:opacity-60 pointer-events-none">
+    <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
       <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
         <ambientLight intensity={1} />
         <directionalLight position={[10, 10, 5]} intensity={2} />

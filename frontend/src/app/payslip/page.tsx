@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import Sidebar from '@/components/Sidebar';
+import { Scribble } from '@/components/scrapbook';
 import { AppPageLoader, FormPanelSkeleton, InlineLoader, ListSkeleton } from '@/components/LoadingStates';
 import { UploadCloud, CheckCircle, AlertTriangle, FileText, Activity, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -148,18 +149,19 @@ export default function PayslipValidation() {
   if (loading || !user) return <AppPageLoader label="Loading payslips" />;
 
   return (
-    <div className="min-h-screen bg-carbon md:pl-64 pb-20 md:pb-0 text-zinc-900 dark:text-white transition-colors">
+    <div className="min-h-screen sb-page md:pl-64 pb-20 md:pb-0 text-zinc-900 transition-colors">
       <Sidebar />
       <main className="p-6 md:p-10 max-w-7xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 border-b border-zinc-200 dark:border-zinc-800 pb-6"
+          className="mb-10"
         >
-          <h2 className="text-4xl font-black font-display uppercase tracking-tight italic">
+          <h2 className="font-hand font-bold text-6xl leading-none">
             Payslip <span className="text-racing-red">Engine</span>
           </h2>
-          <p className="text-sm text-zinc-500 uppercase tracking-widest font-bold mt-2">AI-Powered extraction and discrepancy detection</p>
+          <Scribble className="mt-1 h-3 w-44 text-ink" />
+          <p className="font-note text-xl text-ink-soft mt-2">Upload a payslip and check it against your hours</p>
         </motion.div>
 
         {isDataLoading ? (
@@ -168,7 +170,7 @@ export default function PayslipValidation() {
               <FormPanelSkeleton />
             </div>
             <div className="lg:col-span-2">
-              <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Historical Scans</h3>
+              <h3 className="font-note text-2xl text-ink mb-4">Historical Scans</h3>
               <ListSkeleton rows={4} />
             </div>
           </div>
@@ -180,9 +182,9 @@ export default function PayslipValidation() {
             transition={{ delay: 0.1 }}
             className="lg:col-span-1 space-y-6"
           >
-            <div className={`bg-white/80 dark:bg-zinc-900/80 rounded-xl shadow-lg border overflow-hidden backdrop-blur-sm transition-all duration-500 ${uploading ? 'border-racing-red shadow-[0_0_30px_rgba(220,38,38,0.2)]' : 'border-zinc-200 dark:border-zinc-800'}`}>
-              <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50">
-                <h3 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-widest flex items-center">
+            <div className={`bg-white/80 rounded-xl shadow-lg border overflow-hidden backdrop-blur-sm transition-all duration-500 ${uploading ? 'border-racing-red shadow-[0_0_30px_rgba(220,38,38,0.2)]' : 'border-zinc-200'}`}>
+              <div className="p-6 border-b border-zinc-200 bg-zinc-50/50">
+                <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-widest flex items-center">
                   <Activity className={`w-4 h-4 mr-2 ${uploading ? 'text-racing-red animate-pulse' : 'text-zinc-400'}`} />
                   {uploading ? 'Analysis in Progress...' : 'Configure Scan'}
                 </h3>
@@ -191,13 +193,13 @@ export default function PayslipValidation() {
               <div className="p-6">
                 <AnimatePresence mode="wait">
                   {error && !uploading && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-6 rounded bg-red-100 dark:bg-red-950/50 border border-racing-red p-4 text-xs font-bold uppercase tracking-widest text-red-700 dark:text-red-400">
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-6 rounded bg-red-100 border border-racing-red p-4 text-xs font-bold uppercase tracking-widest text-red-700">
                       <AlertTriangle className="w-4 h-4 mb-2" />
                       {error}
                     </motion.div>
                   )}
                   {successMsg && !uploading && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-6 rounded bg-green-50 dark:bg-green-950/30 border border-green-500 dark:border-green-900 p-4 text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-6 rounded bg-green-50 border border-green-500 p-4 text-xs font-bold uppercase tracking-widest text-green-700">
                       <CheckCircle className="w-4 h-4 mb-2" />
                       {successMsg}
                     </motion.div>
@@ -209,18 +211,18 @@ export default function PayslipValidation() {
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Target Employer</label>
                     <select
                       required disabled={uploading}
-                      className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
+                      className="block w-full border-zinc-300 bg-white px-4 py-3 text-zinc-900 focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
                       value={client} onChange={(e) => setClient(e.target.value)}
                     >
                       {clients.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Start Date</label>
                       <input
                         type="date" required disabled={uploading}
-                        className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
+                        className="block w-full border-zinc-300 bg-white px-4 py-3 text-zinc-900 focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
                         value={startDate} onChange={(e) => setStartDate(e.target.value)}
                       />
                     </div>
@@ -228,7 +230,7 @@ export default function PayslipValidation() {
                       <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">End Date</label>
                       <input
                         type="date" required disabled={uploading}
-                        className="block w-full border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-3 text-zinc-900 dark:text-white focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
+                        className="block w-full border-zinc-300 bg-white px-4 py-3 text-zinc-900 focus:border-racing-red transition-all shadow-sm disabled:opacity-50"
                         value={endDate} onChange={(e) => setEndDate(e.target.value)}
                       />
                     </div>
@@ -249,10 +251,10 @@ export default function PayslipValidation() {
                     htmlFor="payslip-file-input"
                     className={`mt-6 flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 text-center transition-all relative overflow-hidden select-none
                       ${uploading
-                        ? 'border-racing-red bg-red-50/10 dark:bg-red-900/10 cursor-wait'
+                        ? 'border-racing-red bg-red-50/10 cursor-wait'
                         : file
-                          ? 'border-green-500 bg-green-50/10 dark:bg-green-900/10 cursor-pointer hover:border-green-400'
-                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/50 cursor-pointer hover:border-racing-red hover:bg-zinc-100 dark:hover:bg-zinc-900/80'
+                          ? 'border-green-500 bg-green-50/10 cursor-pointer hover:border-green-400'
+                          : 'border-zinc-300 bg-zinc-50 cursor-pointer hover:border-racing-red hover:bg-zinc-100'
                       }`}
                   >
                     {uploading && (
@@ -260,7 +262,7 @@ export default function PayslipValidation() {
                         initial={{ top: '-10%' }}
                         animate={{ top: '110%' }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                        className="absolute left-0 right-0 h-1 bg-racing-red shadow-[0_0_15px_rgba(220,38,38,0.8)]"
+                        className="absolute left-0 right-0 h-1 bg-racing-red shadow-sm"
                       />
                     )}
 
@@ -271,14 +273,14 @@ export default function PayslipValidation() {
                     )}
 
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-300">
+                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-600">
                         {uploading ? 'Extracting text…' : file ? file.name : 'Click anywhere to upload PDF'}
                       </p>
                       {!uploading && !file && (
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-widest mt-1">PDF only · Max 5 MB</p>
+                        <p className="text-[11px] text-zinc-400 uppercase tracking-widest mt-1">PDF only · Max 5 MB</p>
                       )}
                       {file && !uploading && (
-                        <p className="text-[10px] text-green-500 uppercase tracking-widest mt-1 font-bold">
+                        <p className="text-[11px] text-green-500 uppercase tracking-widest mt-1 font-bold">
                           {(file.size / 1024).toFixed(0)} KB · Click to change
                         </p>
                       )}
@@ -287,12 +289,12 @@ export default function PayslipValidation() {
 
                   {uploading && (
                     <div className="space-y-2 mt-4">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                      <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest">
                         <span className={scanStep >= 1 ? 'text-racing-red' : 'text-zinc-500'}>1. Validation</span>
                         <span className={scanStep >= 2 ? 'text-racing-red' : 'text-zinc-500'}>2. OCR Scan</span>
                         <span className={scanStep >= 3 ? 'text-racing-red' : 'text-zinc-500'}>3. Calculation</span>
                       </div>
-                      <div className="h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-1 bg-zinc-200 rounded-full overflow-hidden">
                         <motion.div 
                           className="h-full bg-racing-red"
                           initial={{ width: '0%' }}
@@ -308,7 +310,7 @@ export default function PayslipValidation() {
                     whileTap={{ scale: uploading ? 1 : 0.98 }}
                     type="submit"
                     disabled={!file || uploading}
-                    className="clip-slant-btn mt-4 w-full py-4 bg-racing-red text-xs font-bold tracking-widest uppercase text-white hover:bg-red-700 hover:shadow-neon-red disabled:opacity-50 disabled:hover:shadow-none transition-all shadow-md"
+                    className=" mt-4 w-full py-4 bg-ink text-xs font-bold tracking-widest uppercase text-white hover:bg-zinc-800 disabled:opacity-50 transition-all shadow-md"
                   >
                     {uploading ? 'Processing Data...' : 'Run Diagnostics Engine'}
                   </motion.button>
@@ -333,8 +335,8 @@ export default function PayslipValidation() {
                   <p>{'>'} PDF_GROSS_TOTAL: ${diagnostics.extractedGross.toFixed(2)}</p>
                   {diagnostics.extractedAllowances > 0 && (
                     <>
-                      <p className="text-yellow-400">{'>'} PDF_ALLOWANCES_DETECTED: ${diagnostics.extractedAllowances.toFixed(2)}</p>
-                      <p className="text-yellow-400">{'>'} PDF_TIME_BASED_GROSS: ${diagnostics.timeBasedGross.toFixed(2)}</p>
+                      <p className="text-amber-500">{'>'} PDF_ALLOWANCES_DETECTED: ${diagnostics.extractedAllowances.toFixed(2)}</p>
+                      <p className="text-amber-500">{'>'} PDF_TIME_BASED_GROSS: ${diagnostics.timeBasedGross.toFixed(2)}</p>
                     </>
                   )}
                   {diagnostics.extractedNett != null && <p>{'>'} PDF_NET: ${diagnostics.extractedNett.toFixed(2)}</p>}
@@ -351,7 +353,7 @@ export default function PayslipValidation() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2"
           >
-            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Historical Scans</h3>
+            <h3 className="font-note text-2xl text-ink mb-4">Historical Scans</h3>
             <div className="space-y-4">
               <AnimatePresence>
                 {payslips.map((ps, i) => {
@@ -362,43 +364,42 @@ export default function PayslipValidation() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.1 }}
                       key={ps._id} 
-                      className={`bg-white/80 dark:bg-zinc-900/80 rounded-xl shadow-lg border-l-4 ${isMatch ? 'border-green-500' : 'border-racing-red'} p-6 relative overflow-hidden backdrop-blur-sm group`}
+                      className={`bg-white/80 rounded-xl shadow-lg border-l-4 ${isMatch ? 'border-green-500' : 'border-racing-red'} p-6 relative overflow-hidden backdrop-blur-sm group`}
                     >
-                      <div className={`absolute top-0 right-0 w-40 h-40 opacity-[0.03] dark:opacity-10 blur-[60px] ${isMatch ? 'bg-green-500' : 'bg-racing-red'}`}></div>
                       
                       <div className="flex justify-between items-start mb-6 relative z-10">
                         <div>
-                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-                            {ps.client?.name || 'Unknown Employer'} | {new Date(ps.periodStart).toLocaleDateString()} - {new Date(ps.periodEnd).toLocaleDateString()}
+                          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                            {ps.client?.name || 'Unknown Employer'} | {new Date(ps.periodStart).toLocaleDateString()} to {new Date(ps.periodEnd).toLocaleDateString()}
                           </p>
-                          <h4 className="font-black text-zinc-900 dark:text-white font-display text-xl tracking-wide">
+                          <h4 className="font-bold text-zinc-900 font-display text-xl ">
                             Gross: ${ps.paidAmount?.toFixed(2) || '0.00'}
                           </h4>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {!isMatch ? (
-                            <div className="flex items-center text-racing-red bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest shadow-sm">
+                            <div className="flex items-center text-racing-red bg-red-50 border border-red-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest shadow-sm">
                               <AlertTriangle className="w-4 h-4 mr-2" /> Discrepancy
                             </div>
                           ) : (
-                            <div className="flex items-center text-green-700 dark:text-green-500 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest shadow-sm">
+                            <div className="flex items-center text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest shadow-sm">
                               <CheckCircle className="w-4 h-4 mr-2" /> Match Confirmed
                             </div>
                           )}
-                          <button disabled={deletingId === ps._id} onClick={() => handleDelete(ps._id)} className="p-1.5 opacity-0 group-hover:opacity-100 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-400 hover:text-racing-red transition-all disabled:cursor-wait disabled:opacity-60">
+                          <button disabled={deletingId === ps._id} onClick={() => handleDelete(ps._id)} aria-label="Delete payslip" className="p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 bg-zinc-100 rounded text-zinc-400 hover:text-racing-red transition-all disabled:cursor-wait disabled:opacity-60 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center">
                             {deletingId === ps._id ? <InlineLoader label="" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 relative z-10 shadow-inner">
+                      <div className="grid grid-cols-2 gap-4 bg-zinc-50 border border-zinc-200 rounded-lg p-5 relative z-10 shadow-inner">
                         <div>
-                          <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Tracked Hours</p>
-                          <p className="text-3xl font-black font-display text-zinc-900 dark:text-white">{ps.paidHours}</p>
+                          <p className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Tracked Hours</p>
+                          <p className="text-3xl font-bold font-display text-zinc-900">{ps.paidHours}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Scanner Status</p>
-                          <p className={`text-xl font-black font-display mt-2 ${isMatch ? 'text-green-600 dark:text-green-500' : 'text-racing-red'}`}>
+                          <p className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Scanner Status</p>
+                          <p className={`text-xl font-bold font-display mt-2 ${isMatch ? 'text-green-600' : 'text-racing-red'}`}>
                             {isMatch ? 'VERIFIED' : 'FAILED'}
                           </p>
                         </div>
@@ -408,7 +409,7 @@ export default function PayslipValidation() {
                 })}
               </AnimatePresence>
               {payslips.length === 0 && (
-                <div className="bg-white/50 dark:bg-zinc-900/50 p-10 text-center text-zinc-500 font-bold uppercase tracking-widest text-sm rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-800">
+                <div className="bg-white/50 p-10 text-center text-zinc-500 font-bold uppercase tracking-widest text-sm rounded-xl border-2 border-dashed border-zinc-200">
                   No payslips analyzed yet.
                 </div>
               )}

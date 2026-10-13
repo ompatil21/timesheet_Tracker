@@ -5,22 +5,24 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, AlertCircle, Clock, BarChart3, Shield, Check } from 'lucide-react';
+import { ArrowRight, AlertCircle } from 'lucide-react';
 import api from '@/lib/axios';
+import { ScrapbookDefs, Scrap, Tape, Scribble, Star, Heart, Smiley, CheckBox, Flower } from '@/components/scrapbook';
 
 const FEATURES = [
-  { icon: Clock,     text: 'Log hours as you work — manual or live timer' },
-  { icon: BarChart3, text: 'Weekly & monthly earnings breakdown per client' },
-  { icon: Shield,    text: 'Payslip verification with a full evidence trail' },
+  'Log hours as you work',
+  'See weekly and monthly earnings',
+  'Check every payslip against your hours',
 ];
-
-const PROOF_ITEMS = ['No credit card', 'Cancel any time', 'Export your data'];
 
 const STATS = [
-  { value: '28.5h', label: 'Logged this week' },
-  { value: '$1,247', label: 'Est. earnings' },
-  { value: '3', label: 'Active clients' },
+  { value: '28.5h', label: 'logged this week' },
+  { value: '$1,247', label: 'est. earnings' },
+  { value: '3', label: 'active clients' },
 ];
+
+const fieldClass =
+  'w-full bg-transparent border-0 border-b-2 border-ink/40 px-1 py-2 font-note text-xl text-ink placeholder:text-ink-faint/70 focus:border-ink focus:shadow-none';
 
 export default function Login() {
   const [email, setEmail]       = useState('');
@@ -46,184 +48,169 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F2EB] flex overflow-hidden">
+    <div className="min-h-screen sb-page text-ink flex overflow-hidden">
+      <ScrapbookDefs />
 
-      {/* ── Left: brand panel ── */}
-      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 border-r border-[#1E1E1E] bg-[#0D0D0D]">
+      {/* ── Left: collage panel ── */}
+      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 border-r-2 border-dashed border-ink/25">
 
-        {/* Logo */}
-        <Link href="/" className="font-display text-xl font-black uppercase italic tracking-tighter text-[#F5F2EB] w-fit">
-          Time<span className="text-volt">Tracker</span>
+        <Link href="/" className="font-note text-2xl leading-[1.05] tracking-wide w-fit">
+          Time<br /><span className="pl-3">Tracker</span>
         </Link>
 
-        {/* Centre content */}
-        <div className="space-y-10 max-w-md">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A] border border-[#1E1E1E] px-3.5 py-1.5 rounded-full">
-              <span className="h-1.5 w-1.5 rounded-full bg-volt animate-pulse inline-block" />
-              For freelancers
-            </div>
+        <div className="relative max-w-lg mx-auto w-full">
+          <Flower className="absolute -left-16 top-6 h-64 text-ink" />
 
-            <h1 className="font-heading text-[clamp(2.5rem,3.5vw,3.5rem)] font-bold leading-[0.93] tracking-tight">
-              Your time,<br />
-              <span className="text-volt">your invoice.</span>
-            </h1>
-
-            <p className="text-base leading-relaxed text-[#6B6B6B]">
-              Stop guessing what you&apos;re owed. Log hours as you work, verify your payslip, and spot discrepancies before they cost you.
-            </p>
+          {/* Kraft headline */}
+          <div className="relative -rotate-2 ml-10">
+            <Tape className="-top-3 left-1/3 -rotate-2 !w-36" />
+            <Scrap paper="kraft" className="px-9 pt-12 pb-10">
+              <h1 className="font-hand font-bold text-6xl leading-[0.95]">
+                Your time,<br />your invoice.
+              </h1>
+              <Scribble className="mt-2 h-4 w-56 text-ink" />
+              <p className="mt-6 text-sm leading-relaxed text-ink/80 max-w-xs">
+                Stop guessing what you&apos;re owed. Log hours as you work, verify your payslip, and spot discrepancies before they cost you.
+              </p>
+            </Scrap>
           </div>
 
-          {/* Feature list */}
-          <div className="space-y-3">
-            {FEATURES.map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-volt/10 border border-volt/20 flex items-center justify-center shrink-0">
-                  <Icon className="h-4 w-4 text-volt" />
-                </div>
-                <span className="text-sm text-[#A0A0A0]">{text}</span>
-              </div>
-            ))}
+          {/* Lined checklist */}
+          <div className="relative -mt-6 ml-auto w-72 rotate-3">
+            <Star className="absolute -top-12 -right-4 h-10 w-10 text-ink" />
+            <div className="sb-lined px-6 pt-4 pb-5 shadow-lg font-note text-xl">
+              <p className="sb-link inline-block tracking-widest">WHAT YOU GET:</p>
+              <ul>
+                {FEATURES.map(text => (
+                  <li key={text} className="flex items-start gap-2">
+                    <CheckBox checked className="mt-1 h-6 w-6 shrink-0 overflow-visible" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+              <Heart className="ml-auto h-7 w-7" />
+            </div>
           </div>
 
-          {/* Live snapshot widget */}
-          <div className="rounded-xl border border-[#1E1E1E] bg-[#111111] p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">Live snapshot</span>
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-volt">
-                <span className="h-1.5 w-1.5 rounded-full bg-volt animate-pulse inline-block" />
-                Tracking
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
+          {/* Graph-paper snapshot */}
+          <div className="sb-grid relative -mt-4 ml-4 w-fit -rotate-2 px-6 py-4 shadow-md">
+            <div className="flex gap-7">
               {STATS.map(stat => (
                 <div key={stat.label}>
-                  <p className="font-heading text-2xl font-black tabular-nums text-[#F5F2EB]">{stat.value}</p>
-                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-[#5A5A5A]">{stat.label}</p>
+                  <p className="text-2xl font-bold tabular-nums">{stat.value}</p>
+                  <p className="font-note text-base text-ink-soft">{stat.label}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Trust badges */}
-          <div className="flex flex-wrap gap-5">
-            {PROOF_ITEMS.map(item => (
-              <div key={item} className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
-                <Check className="h-3.5 w-3.5 text-volt" />
-                {item}
-              </div>
-            ))}
-          </div>
         </div>
 
-        <p className="text-xs text-[#3A3A3A]">© 2026 TimeTracker — Your time, your terms.</p>
+        <p className="font-note text-lg text-ink-soft">© 2026 Time Tracker. Your time, your terms.</p>
       </div>
 
       {/* ── Right: form panel ── */}
       <div className="flex-1 flex flex-col">
 
         {/* Mobile header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#1E1E1E] lg:hidden">
-          <Link href="/" className="font-display text-xl font-black uppercase italic tracking-tighter text-[#F5F2EB]">
-            Time<span className="text-volt">Tracker</span>
-          </Link>
-          <Link href="/register" className="text-sm text-[#5A5A5A] hover:text-[#F5F2EB] transition-colors">
-            Sign up
-          </Link>
+        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-dashed border-ink/25 lg:hidden">
+          <Link href="/" className="py-2 font-note text-2xl tracking-wide">Time Tracker</Link>
+          <Link href="/register" className="sb-link py-2 font-note text-lg">Sign up</Link>
         </div>
 
-        {/* Error toast */}
+        {/* Error note */}
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 pointer-events-none">
           <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -12, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                initial={{ opacity: 0, y: -12, rotate: -3 }}
+                animate={{ opacity: 1, y: 0, rotate: -1 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-[#111111] border border-red-500/25 text-[#F5F2EB] px-5 py-4 rounded-xl shadow-2xl flex items-start gap-3 pointer-events-auto"
+                className="bg-paper-white border-2 border-stamp text-stamp px-5 py-3 shadow-lg flex items-start gap-3 pointer-events-auto"
               >
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-[#A0A0A0]">{error}</p>
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="font-note text-lg leading-snug">{error}</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
         {/* Centered form */}
-        <div className="flex-1 flex items-center justify-center px-8 py-16">
+        <div className="flex-1 flex items-center justify-center px-6 py-16">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 16, rotate: 2 }}
+            animate={{ opacity: 1, y: 0, rotate: 0.5 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-[400px] space-y-8"
+            className="relative w-full max-w-[420px]"
           >
-            {/* Heading */}
-            <div>
-              <h2 className="font-heading text-3xl font-bold tracking-tight text-[#F5F2EB]">Welcome back</h2>
-              <p className="mt-1.5 text-sm text-[#5A5A5A]">Sign in to your TimeTracker account</p>
-            </div>
+            <Smiley className="absolute -right-6 -top-8 z-10 h-16 w-16 rotate-12 drop-shadow-sm" />
+            <Tape className="-top-3 left-10 -rotate-3" />
+            <Scrap paper="white" edge="rough" className="px-8 sm:px-10 pt-12 pb-10">
+              <h2 className="font-hand font-bold text-5xl leading-none">Welcome back</h2>
+              <p className="mt-2 font-note text-lg text-ink-soft">Sign in to your Time Tracker account</p>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  className="w-full bg-[#111111] border border-[#1E1E1E] rounded-lg px-4 py-3 text-sm text-[#F5F2EB] placeholder-[#3A3A3A] transition-colors duration-150 focus:outline-none focus:border-volt/50 focus:[box-shadow:0_0_0_3px_rgba(200,241,53,0.08)]"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                <div>
+                  <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-ink-soft">
+                    Email address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    className={fieldClass}
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-ink-soft">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    className={fieldClass}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ rotate: -1, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group block w-full font-note text-xl uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Scrap paper="ink" edge="rough" className="flex items-center justify-center gap-3 px-6 py-3 text-paper">
+                    {loading ? 'Signing in…' : 'Sign in'}
+                    {!loading && (
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    )}
+                  </Scrap>
+                </motion.button>
+              </form>
+
+              <div className="mt-8 flex items-center gap-4">
+                <div className="flex-1 border-t-2 border-dashed border-ink/25" />
+                <span className="font-note text-lg text-ink-soft">new here?</span>
+                <div className="flex-1 border-t-2 border-dashed border-ink/25" />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-[#5A5A5A]">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  className="w-full bg-[#111111] border border-[#1E1E1E] rounded-lg px-4 py-3 text-sm text-[#F5F2EB] placeholder-[#3A3A3A] transition-colors duration-150 focus:outline-none focus:border-volt/50 focus:[box-shadow:0_0_0_3px_rgba(200,241,53,0.08)]"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-lg bg-volt text-[#0A0A0A] hover:brightness-110 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed group mt-2"
+              <Link
+                href="/register"
+                className="sb-sketch mt-6 block w-full px-6 py-2.5 text-center font-note text-xl hover:bg-tape/60 transition-colors"
               >
-                {loading ? 'Signing in…' : 'Sign in'}
-                {!loading && (
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                )}
-              </motion.button>
-            </form>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4">
-              <div className="h-px flex-1 bg-[#1E1E1E]" />
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#3A3A3A]">new here?</span>
-              <div className="h-px flex-1 bg-[#1E1E1E]" />
-            </div>
-
-            {/* Switch to register */}
-            <Link
-              href="/register"
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 font-bold text-sm rounded-lg border border-[#1E1E1E] text-[#F5F2EB] hover:border-[#2E2E2E] hover:bg-[#111111] transition-all duration-150"
-            >
-              Create a free account
-            </Link>
+                Create a free account
+              </Link>
+            </Scrap>
           </motion.div>
         </div>
       </div>
