@@ -386,8 +386,12 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="mx-auto max-w-6xl px-6 pb-8">
         <Rule className="h-2 w-full text-ink" />
-        <div className="flex items-center justify-between pt-5 font-note text-lg text-ink-soft">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-5 font-note text-lg text-ink-soft">
           <span>Time Tracker</span>
+          <nav aria-label="Legal" className="flex gap-5">
+            <a href="/privacy" className="hover:text-stamp transition-colors duration-200">Privacy</a>
+            <a href="/terms" className="hover:text-stamp transition-colors duration-200">Terms</a>
+          </nav>
           <p>© 2026. Your time, your terms.</p>
         </div>
       </footer>

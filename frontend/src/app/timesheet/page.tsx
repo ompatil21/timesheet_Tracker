@@ -356,7 +356,8 @@ export default function Timesheet() {
                         type="button"
                         onClick={() => setIsSupervisorShift(v => !v)}
                         className={`relative w-12 h-6 rounded-full transition-colors after:absolute after:-inset-3 after:content-[''] ${isSupervisorShift ? 'bg-amber-500' : 'bg-zinc-300'}`}
-                        aria-label="Toggle supervisor shift"
+                        aria-label="Supervisor shift"
+                        aria-pressed={isSupervisorShift}
                       >
                         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isSupervisorShift ? 'translate-x-6' : ''}`} />
                       </button>

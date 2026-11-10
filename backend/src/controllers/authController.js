@@ -4,8 +4,28 @@ const generateToken = require('../utils/generateToken');
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { website } = req.body;
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+  // Honeypot: the sign-up form has a hidden "website" field people never see.
+  // Bots that fill it get a generic rejection.
+  if (website) {
+    return res.status(400).json({ message: 'Invalid user data' });
+  }
+  if (!name || name.length > 80) {
+    return res.status(400).json({ message: 'Please enter your name (80 characters max).' });
+  }
+  if (!EMAIL_RE.test(email) || email.length > 254) {
+    return res.status(400).json({ message: 'Please enter a valid email address.' });
+  }
+  if (password.length < 6 || password.length > 128) {
+    return res.status(400).json({ message: 'Password must be between 6 and 128 characters.' });
+  }
 
   try {
     const userExists = await User.findOne({ email });
@@ -39,7 +59,12 @@ const registerUser = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const authUser = async (req, res) => {
-  const { email, password } = req.body;
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
 
   try {
     const user = await User.findOne({ email });

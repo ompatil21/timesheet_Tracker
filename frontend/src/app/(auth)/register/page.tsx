@@ -32,6 +32,8 @@ export default function Register() {
   const [email,           setEmail]           = useState('');
   const [password,        setPassword]        = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  // Honeypot: hidden from people, but naive bots fill every field.
+  const [website,         setWebsite]         = useState('');
   const [error,           setError]           = useState('');
   const [success,         setSuccess]         = useState('');
   const [loading,         setLoading]         = useState(false);
@@ -43,6 +45,10 @@ export default function Register() {
     setError('');
     setSuccess('');
 
+    if (!name.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
@@ -54,7 +60,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/register', { name, email, password });
+      const { data } = await api.post('/auth/register', { name: name.trim(), email: email.trim(), password, website });
       login(data.token, { _id: data._id, name: data.name, email: data.email });
       setSuccess('Account created! Taking you to your dashboard…');
       setTimeout(() => router.push('/dashboard'), 1400);
@@ -128,12 +134,25 @@ export default function Register() {
               </p>
 
               <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label htmlFor="website">Leave this field empty</label>
+                  <input
+                    id="website"
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
+                </div>
                 <div>
                   <label htmlFor="name" className={labelClass}>Full name</label>
                   <input
                     id="name"
                     type="text"
                     required
+                    maxLength={80}
                     autoComplete="name"
                     className={fieldClass}
                     placeholder="Alex Johnson"
